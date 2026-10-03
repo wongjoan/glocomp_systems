@@ -12,11 +12,9 @@
     { "source": "/supabase/:path*", "destination": "/login", "permanent": false }
   ],
   "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/employee", "destination": "/employee-dashboard.html" },
-    { "source": "/employer", "destination": "/index.html" },
-    { "source": "/dashboard", "destination": "/index.html" },
-    { "source": "/architecture", "destination": "/architecture.html" },
+    { "source": "/employee", "destination": "/employee-dashboard" },
+    { "source": "/employer", "destination": "/" },
+    { "source": "/dashboard", "destination": "/" },
     { "source": "/api/:route*", "destination": "/api/app?route=:route*" }
   ],
   "headers": [
