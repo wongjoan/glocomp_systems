@@ -9,3 +9,5 @@ data/source/
 
 # local editor / Claude settings (removed from the repo on purpose)
 .claude/
+# screenshots captured for the slide deck
+deck-screenshots/

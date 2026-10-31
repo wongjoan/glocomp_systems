@@ -63,7 +63,7 @@
     if (a && t) {
       var label = a.querySelector(".sb-label");
       t.textContent = (label ? label.textContent : a.textContent).trim();
-      document.title = t.textContent + " — Glocomp";
+      document.title = t.textContent + " — Glocomp Systems";
     }
   }
   // Hide group headings that have no visible items under them (nav items are filtered per role).

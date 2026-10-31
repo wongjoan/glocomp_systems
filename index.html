@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Glocomp</title>
+<title>Dashboard — Glocomp Systems</title>
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/gc.css">
 <link rel="stylesheet" href="assets/dashstack.css">
@@ -15,7 +15,7 @@
 <div class="viz-root app-shell" id="root">
 
   <aside class="sidebar" id="sidebar" aria-label="Main navigation">
-    <div class="sb-brand"><span class="sb-logo">G</span><span class="sb-name">Glo<b>comp</b></span></div>
+    <div class="sb-brand"><span class="sb-logo">G</span><span class="sb-name">Glo<b>comp</b> <small>Systems</small></span></div>
     <nav class="tabs sb-nav" role="tablist" aria-label="Dashboard views" aria-orientation="vertical">
       <span class="sb-indicator" aria-hidden="true"></span>
       <div class="sb-group">Overview</div>
@@ -44,7 +44,7 @@
   <div class="app-main">
     <header class="topbar">
       <button class="icon-btn" id="sbToggle" type="button" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="true"><i data-icon="menu"></i></button>
-      <div class="tb-title"><h1 id="pageTitle">Dashboard</h1><p id="scopeLine">Glocomp commercial team — performance, ROI and contribution visibility</p></div>
+      <div class="tb-title"><h1 id="pageTitle">Dashboard</h1><p id="scopeLine">Glocomp Systems commercial team — performance, ROI and contribution visibility</p></div>
       <div id="govToolbar" class="row" style="flex-wrap:nowrap;">
         <div class="gov-header-badge" id="govHeaderBadge"><span class="dot"></span>Attribution <span class="gov-version-tag" id="govHeaderVersionTag"></span></div>
         <button class="gov-header-btn" id="govHeaderEditBtn" type="button">Governance edit</button>
@@ -987,11 +987,20 @@
   /* ---------------- render: ROI & cost view ---------------- */
   function loadRoi() { return GC.api("/api/roi").then(renderRoiView); }
   function costBar(r) {
-    var parts = [["Salary", r.salary_cost, "var(--series-1)"], ["Variable pay", r.variable_cost, "var(--series-2)"], ["Expenses", r.expense_cost, "var(--series-4)"], ["Other employment cost", r.other_cost, "var(--series-5)"]];
+    // [legend name, amount, colour, short label shown inside the bar]
+    var parts = [["Salary", r.salary_cost, "var(--series-1)", "Salary"], ["Variable pay", r.variable_cost, "var(--series-2)", "Variable"], ["Expenses", r.expense_cost, "var(--series-4)", "Expenses"], ["Other employment cost", r.other_cost, "var(--series-5)", "Other"]];
     var tot = r.total_cost || 1;
-    return '<div class="wbar">' + parts.map(function (p) { var w = p[1] / tot * 100; return '<div style="width:' + w + "%;background:" + p[2] + ';color:' + textOnFill(p[2]) + '" title="' + p[0] + ": " + fmtMoney(p[1]) + '">' + (w > 12 ? p[0] : "") + "</div>"; }).join("") + "</div>" +
-      '<div class="wlegend">' + parts.map(function (p) { return '<span><i style="background:' + p[2] + '"></i>' + p[0] + " " + fmtMoney(p[1]) + "</span>"; }).join("") + "</div>";
+    // Segments carry a short label (data-label); fitBarLabels() hides any that don't fit their segment.
+    return '<div class="wbar cost-bar">' + parts.map(function (p) { var w = p[1] / tot * 100; return '<div style="width:' + w + "%;background:" + p[2] + ';color:' + textOnFill(p[2]) + '" title="' + p[0] + ": " + fmtMoney(p[1]) + '" data-label="' + p[3] + '">' + p[3] + "</div>"; }).join("") + "</div>" +
+      '<div class="wlegend">' + parts.map(function (p) { return '<span><i style="background:' + p[2] + '"></i>' + p[0] + " " + fmtMoney(p[1]) + " · " + Math.round(p[1] / tot * 100) + "%</span>"; }).join("") + "</div>";
   }
+  function fitBarLabels(scope) {
+    (scope || document).querySelectorAll(".cost-bar > div").forEach(function (seg) {
+      seg.innerHTML = "<span>" + esc(seg.dataset.label) + "</span>";
+      if (seg.firstChild.offsetWidth + 12 > seg.clientWidth) seg.textContent = "";   // too narrow: the legend still names it
+    });
+  }
+  window.addEventListener("resize", function () { fitBarLabels(); });
   function roiRow(r, label) {
     return "<tr><td>" + label + '</td><td class="num">' + r.headcount + '</td><td class="num"><b>' + fmtMoney(r.return) + '</b></td><td class="num">' + fmtMoney(r.salary_cost) + '</td><td class="num">' + fmtMoney(r.variable_cost) +
       '</td><td class="num">' + fmtMoney(r.expense_cost) + '</td><td class="num">' + fmtMoney(r.other_cost) + '</td><td class="num"><b>' + fmtMoney(r.total_cost) + '</b></td><td class="num">' + badge(r.roi_pct < 50 ? "critical" : r.roi_pct < 100 ? "warning" : "good", r.roi_pct.toFixed(0) + "%") + '</td><td class="num">' + r.coverage.toFixed(2) + "x</td></tr>";
@@ -1029,6 +1038,7 @@
           }).join("") + "</tbody></table></div></div>"
         : "");
     host.querySelectorAll("[data-claims]").forEach(function (b) { b.addEventListener("click", function () { openClaims(b.dataset.claims); }); });
+    fitBarLabels(host);
   }
   function openClaims(id) {
     GC.api("/api/expenses?id=" + encodeURIComponent(id)).then(function (d) {

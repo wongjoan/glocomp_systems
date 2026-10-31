@@ -73,8 +73,9 @@ body { font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-se
 .sb-brand { height: var(--topbar-h); display: flex; align-items: center; gap: 10px; padding: 0 22px; flex: none; overflow: hidden; }
 .sb-logo { width: 34px; height: 34px; border-radius: 10px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 16px;
   background: linear-gradient(135deg, #4880ff, #8280ff); box-shadow: 0 6px 16px rgba(72, 128, 255, .35); }
-.sb-name { font-size: 20px; font-weight: 800; color: var(--text-primary); white-space: nowrap; letter-spacing: -.01em; transition: opacity .18s, max-width .28s; max-width: 200px; overflow: hidden; }
+.sb-name { font-size: 20px; font-weight: 800; color: var(--text-primary); white-space: nowrap; letter-spacing: -.01em; transition: opacity .18s, max-width .28s; max-width: 200px; overflow: hidden; text-overflow: clip; }
 .sb-name b { color: var(--primary); font-weight: 800; }
+.sb-name small { font-size: 15px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0; }
 
 aside.sidebar nav.sb-nav { position: relative; flex: 1; display: flex; flex-direction: column; gap: 2px; flex-wrap: nowrap;
   padding: 6px 16px 12px 22px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
@@ -173,6 +174,8 @@ aside.sidebar nav.sb-nav > button:focus-visible, aside.sidebar .sb-link:focus-vi
 /* Let grid cells shrink below their content's min width so wide tables scroll inside their card
    (.tscroll) instead of stretching the page on phones. */
 .viz-root .grid > * { min-width: 0; }
+/* stat tiles need ~230px each (icon square + number): 2 per row once the content area gets narrow */
+@media (max-width: 1200px) { .viz-root .grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 920px) {
   .viz-root .grid.cols-2, .viz-root .grid.cols-3 { grid-template-columns: minmax(0, 1fr); }
   .viz-root .grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
