@@ -21,7 +21,7 @@ The version deployed before this upgrade was two static HTML files with no backe
 ### Authentication (`api/_lib/auth.py`)
 - Session = HMAC-SHA256-signed token in a cookie that is `HttpOnly`, `SameSite=Strict`, `Secure` (on HTTPS), with an 8-hour expiry. The token carries only the user ID and expiry.
 - **Role and scope are re-read from the server-side directory on every request.** Editing the cookie, the URL or JavaScript state cannot raise privileges. A forged or tampered token is rejected (covered by tests).
-- Prototype sign-in = **shared demo access code + persona choice**. In production, `SESSION_SECRET` and `DEMO_ACCESS_CODE` must be set as Vercel environment variables. If they are missing, the API refuses to sign anyone in (fail closed).
+- Prototype sign-in = **persona choice + that role level's own demo code** (Director, Senior Manager, Manager and Employee each have a different code, so sharing the Employee code never unlocks a manager or Director view). In production, `SESSION_SECRET` and `DEMO_CODE_DIRECTOR`, `DEMO_CODE_SENIOR_MANAGER`, `DEMO_CODE_MANAGER`, `DEMO_CODE_EMPLOYEE` must be set as Vercel environment variables. If they are missing, the API refuses to sign anyone in (fail closed).
 - Login attempts are throttled (10 per 5 minutes per IP, per function instance).
 
 ### Role-based authorisation (`api/_lib/policy.py`)
@@ -69,7 +69,7 @@ Run the access-control tests with `python -m unittest discover -s tests -v`. The
 
 ## 3. Remaining limitations (prototype)
 
-1. **Demo sign-in is not identity.** Anyone with the access code can pick any persona, including the Director. Treat the code like a password, share it only with demo audiences, and rotate it after demos. Production must use Supabase Auth or company SSO (Azure AD / Google) with MFA.
+1. **Demo sign-in is not identity.** Anyone with a level's code can pick any persona at that level. Codes are separated per level, so give audiences only the code for the level they should see, and rotate codes after demos. Production must use Supabase Auth or company SSO (Azure AD / Google) with MFA.
 2. **State is not durable on Vercel.** `/tmp` is per-instance and ephemeral, so weightage changes, cases and the audit log can reset on a cold start or differ between instances. This is acceptable for a demo, but not for real HR records. Supabase is the fix.
 3. **RLS is designed but not deployed.** Until Supabase is live, the API is the only enforcement layer.
 4. **Throttling is per instance and in memory.** Use Vercel firewall rules or an edge rate limiter in production.

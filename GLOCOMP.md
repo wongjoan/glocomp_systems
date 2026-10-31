@@ -8,7 +8,7 @@ The prototype shows how the commercial team's contribution and return can be mad
 - AI-assisted KPI setting
 - an HR intervention workflow
 
-Each level of the hierarchy sees only what it should. See `SECURITY.md` for the access model and `/architecture` for the visual data-flow diagram.
+Each level of the hierarchy sees only what it should. See `SECURITY.md` for the access model and the [demo guide](https://claude.ai/artifact/AnCheWRxegQHoxo1NV8uWN) for page-by-page explanations, the methodology and the data-flow diagram.
 
 ## 1. Verified technology stack
 
@@ -58,13 +58,13 @@ Data enters only at layers 1–2. **Calculations** run server-side (4–5). **AI
 ```bash
 python dev_server.py
 ```
-Open http://localhost:8000. The local access code is `glocomp-demo`. Run the tests with `python -m unittest discover -s tests -v`.
+Open http://localhost:8000. Local demo codes: `director-demo`, `senior-demo`, `manager-demo`, `employee-demo` (one per role level). Run the tests with `python -m unittest discover -s tests -v`.
 
 Rebuild the seed with `pip install openpyxl`, then `python scripts/build_seed.py`. The script reads `data/source/hr_dummy_dataset.xlsx`, which is git-ignored, so re-download it from the dataset link if needed.
 
 **Deploy (Vercel):** import the repo with no build settings, then set these environment variables:
 - `SESSION_SECRET` (a long random string)
-- `DEMO_ACCESS_CODE`
+- `DEMO_CODE_DIRECTOR`, `DEMO_CODE_SENIOR_MANAGER`, `DEMO_CODE_MANAGER`, `DEMO_CODE_EMPLOYEE` — one demo code per role level
 
 Without them, sign-in is refused (fail closed).
 
@@ -154,7 +154,7 @@ Performance gap → affected KPI → possible cause/context → suggested action
 
 ## 7. What each level sees (demo flow)
 
-Sign in at `/login`. Local access code: `glocomp-demo`.
+Sign in at `/login`. Local demo codes: `director-demo`, `senior-demo`, `manager-demo`, `employee-demo` (one per role level).
 
 1. **Employee** — pick *Kiran Bose* from the employee list.
    - My Performance shows Overall 66%, with Financial 38 of 60 and Non-financial 28 of 40.

@@ -3,56 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Commercial Return Dashboard — Prototype</title>
+<title>Dashboard — Glocomp</title>
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/gc.css">
+<link rel="stylesheet" href="assets/dashstack.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap">
 </head>
 <body>
-<div class="viz-root" id="root">
+<div class="viz-root app-shell" id="root">
 
-  <header class="app-header">
-    <div>
-      <h1>Commercial Return Dashboard</h1>
-      <p class="sub" id="scopeLine">Glocomp commercial team — performance, ROI and contribution visibility</p>
-      <span class="tag">Anonymised demo data · role-based view · prototype</span>
-    </div>
-    <div class="header-controls">
-      <span class="user-chip" id="userChip">Signing in…</span>
-      <a class="gov-header-btn" id="toEmployeeLink" href="/employee" style="text-decoration:none;" hidden>My performance →</a>
-      <button class="theme-toggle" id="themeToggle" type="button">Switch to dark</button>
-      <button class="btn" id="logoutBtn" type="button">Sign out</button>
-    </div>
-  </header>
-
-  <div class="tabs-row">
-    <nav class="tabs" role="tablist" aria-label="Dashboard views">
-      <button role="tab" aria-selected="false" data-view="company">Company</button>
-      <button role="tab" aria-selected="false" data-view="departments">Departments</button>
-      <button role="tab" aria-selected="false" data-view="roi">ROI &amp; Cost</button>
-      <button role="tab" aria-selected="false" data-view="individuals">Individuals (pay)</button>
-      <button role="tab" aria-selected="false" data-view="performance">Performance</button>
-      <button role="tab" aria-selected="false" data-view="hr">HR Intervention</button>
-      <button role="tab" aria-selected="false" data-view="weights">KPI Weightage</button>
-      <button role="tab" aria-selected="false" data-view="ai_kpi">AI KPI Assistant</button>
-      <button role="tab" aria-selected="false" data-view="projects">Projects</button>
-      <button role="tab" aria-selected="false" data-view="access">Access &amp; Security</button>
-      <button role="tab" aria-selected="false" data-view="methodology">Methodology</button>
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="sb-brand"><span class="sb-logo">G</span><span class="sb-name">Glo<b>comp</b></span></div>
+    <nav class="tabs sb-nav" role="tablist" aria-label="Dashboard views" aria-orientation="vertical">
+      <span class="sb-indicator" aria-hidden="true"></span>
+      <div class="sb-group">Overview</div>
+      <button role="tab" aria-selected="false" data-view="company"><i class="sb-ico" data-icon="company"></i><span class="sb-label">Company</span></button>
+      <button role="tab" aria-selected="false" data-view="departments"><i class="sb-ico" data-icon="departments"></i><span class="sb-label">Departments</span></button>
+      <button role="tab" aria-selected="false" data-view="performance"><i class="sb-ico" data-icon="performance"></i><span class="sb-label">Performance</span></button>
+      <div class="sb-group">Finance</div>
+      <button role="tab" aria-selected="false" data-view="roi"><i class="sb-ico" data-icon="roi"></i><span class="sb-label">ROI &amp; Cost</span></button>
+      <button role="tab" aria-selected="false" data-view="individuals"><i class="sb-ico" data-icon="individuals"></i><span class="sb-label">Individuals (pay)</span></button>
+      <button role="tab" aria-selected="false" data-view="projects"><i class="sb-ico" data-icon="projects"></i><span class="sb-label">Projects</span></button>
+      <div class="sb-group">People</div>
+      <button role="tab" aria-selected="false" data-view="hr"><i class="sb-ico" data-icon="hr"></i><span class="sb-label">HR Intervention</span></button>
+      <button role="tab" aria-selected="false" data-view="weights"><i class="sb-ico" data-icon="weights"></i><span class="sb-label">KPI Weightage</span></button>
+      <button role="tab" aria-selected="false" data-view="ai_kpi"><i class="sb-ico" data-icon="ai_kpi"></i><span class="sb-label">AI KPI Assistant</span></button>
+      <div class="sb-group">System</div>
+      <button role="tab" aria-selected="false" data-view="access"><i class="sb-ico" data-icon="access"></i><span class="sb-label">Access &amp; Security</span></button>
     </nav>
-    <div id="govToolbar">
-      <div class="gov-header-badge" id="govHeaderBadge"><span class="dot"></span>Attribution <span class="gov-version-tag" id="govHeaderVersionTag"></span></div>
-      <button class="gov-header-btn" id="govHeaderEditBtn" type="button">Governance edit</button>
+    <div class="sb-footer">
+      <a class="sb-link" id="toEmployeeLink" href="/employee" hidden><i class="sb-ico" data-icon="me"></i><span class="sb-label">My performance</span></a>
+      <button class="sb-link" id="logoutBtn" type="button"><i class="sb-ico" data-icon="logout"></i><span class="sb-label">Sign out</span></button>
+      <button class="sb-link sb-collapse" id="sbCollapse" type="button"><i class="sb-ico" data-icon="collapse"></i><span class="sb-label">Collapse</span></button>
     </div>
-  </div>
+  </aside>
+  <div class="sb-backdrop"></div>
 
-  <div class="filter-row" id="periodFilterRow">
-    <span class="label">Period</span>
-    <div class="seg" role="group" aria-label="Time period">
-      <button data-period="monthly" aria-pressed="true">Monthly</button>
-      <button data-period="quarterly" aria-pressed="false">Quarterly</button>
-      <button data-period="annual" aria-pressed="false">Annual</button>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="icon-btn" id="sbToggle" type="button" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="true"><i data-icon="menu"></i></button>
+      <div class="tb-title"><h1 id="pageTitle">Dashboard</h1><p id="scopeLine">Glocomp commercial team — performance, ROI and contribution visibility</p></div>
+      <div id="govToolbar" class="row" style="flex-wrap:nowrap;">
+        <div class="gov-header-badge" id="govHeaderBadge"><span class="dot"></span>Attribution <span class="gov-version-tag" id="govHeaderVersionTag"></span></div>
+        <button class="gov-header-btn" id="govHeaderEditBtn" type="button">Governance edit</button>
+      </div>
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch to dark mode"><i data-icon="moon"></i></button>
+      <div class="tb-profile" id="userChip"><span class="tb-avatar">…</span><span class="tb-who"><b>Signing in…</b><span></span></span></div>
+    </header>
+
+    <div class="filter-row" id="periodFilterRow">
+      <span class="label">Period</span>
+      <div class="seg" role="group" aria-label="Time period">
+        <button data-period="monthly" aria-pressed="true">Monthly</button>
+        <button data-period="quarterly" aria-pressed="false">Quarterly</button>
+        <button data-period="annual" aria-pressed="false">Annual</button>
+      </div>
+      <span class="label" style="margin-left:8px;">Showing FY2026 to date</span>
     </div>
-    <span class="label" style="margin-left:8px;">Showing FY2026 to date</span>
-  </div>
 
   <main>
     <!-- COMPANY VIEW -->
@@ -115,7 +124,7 @@
         <div class="card-head">
           <div>
             <h3>Attributed NGP vs. employment cost, by department</h3>
-            <p class="card-sub">FY2026 · attribution per the shared-contribution matrix (see Methodology)</p>
+            <p class="card-sub">FY2026 · attribution per the shared-contribution matrix</p>
           </div>
           <button class="table-toggle" data-target="deptTable">View as table</button>
         </div>
@@ -193,13 +202,6 @@
 
       <div class="card" style="margin-bottom:14px;"><h3>Team engagement themes</h3><p class="card-sub">Synthetic pulse survey, aggregated for everyone in your scope (n ≥ 5) — context for whether a gap is individual or environmental</p><div id="hrThemes"></div></div>
 
-      <div class="callout">
-        <h3>How this workflow works</h3>
-        <p><b>Not a label — a chain of evidence:</b> performance gap → the KPI causing it → possible cause (4-quarter pattern, peer comparison, leading indicators, and for HR/Executive review the employee's own survey signals) → a suggested improvement action → manager review (an agreed action plan and review date) → escalation if the gap persists.</p>
-        <p><b>Escalation path:</b> Manager → Senior Manager → Executive / HR review. A manager can record a plan, escalate or resolve while the case is with them; once escalated, only the senior manager (then the Director/HR) can act. The suggested stage comes from how many consecutive quarters the score has been below 75% — every stage move is a manual, audit-logged action.</p>
-        <p><b>Confidentiality:</b> individual pulse/onboarding survey answers and pay-related flags are shown only at Executive/HR review level. Managers and senior managers see team-level survey themes only, and only for groups of 5 or more. Employees never see case stages or notes; their own page shows an "improvement focus" instead.</p>
-        <p><b>Persistence:</b> cases are stored server-side (no more CSV import); the CSV download remains for hand-off and offline review.</p>
-      </div>
     </section>
 
     <!-- PERFORMANCE VIEW -->
@@ -209,10 +211,6 @@
 
     <!-- ROI & COST VIEW -->
     <section class="view" id="view-roi" hidden>
-      <div class="callout">
-        <h3>ROI on the full employee cost base</h3>
-        <p><b>Return</b> = attributed NGP (Sales: own closed-won NGP; other functions: the department's attributed NGP share, weighted by financial KPI attainment). <b>Total cost</b> = salary + variable pay (commission earned or bonus accrual) + approved expense claims (client entertainment, travel, other sales expenses, training) + other employment costs (employer statutory contributions, benefits, tools). <b>ROI</b> = (Return − Total cost) ÷ Total cost. Every person has their own cost structure.</p>
-      </div>
       <div id="roiContent"><p class="loading">Loading ROI…</p></div>
     </section>
 
@@ -236,99 +234,8 @@
       <p class="card-sub" style="margin:0 0 12px;">Project-based view — commercial return per project, with the shared-contribution split across functions that touched it</p>
       <div id="projectList"></div>
     </section>
-
-    <!-- METHODOLOGY VIEW -->
-    <section class="view" id="view-methodology" hidden>
-      <div class="callout">
-        <h3>What's real vs. illustrative in this build</h3>
-        <p><b>One app, four hierarchy levels:</b> Director, Senior Manager, Manager and Employee each sign in and see only what their level allows — enforced by the server, not by hiding things in the page. Everyone who is scored also has "My performance" (their own scorecard, with no pay information).</p>
-        <p><b>Anonymised:</b> names are fictional. Role, department, pay structure and pay amounts follow the supplied commercial roster; each person is linked to a synthetic HR record (tenure, location, pulse/onboarding surveys) from the supplied dummy HR dataset.</p>
-        <p><b>Dummy, deterministic:</b> KPI targets, actuals and 4-quarter history, expense claims, statutory/benefit costs and individual attributed NGP. The KPI <i>definitions</i> in section 3 are Glocomp's real formulas.</p>
-        <p><b>Illustrative, pending real deal-level financials:</b> company revenue/NGP/EBITDA/collections, department attributed NGP, projects and the attribution-governance mechanics in section 6.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>1. One cascade, four checkpoints</h3>
-        <p>Every deal and every period is tracked through the same four checkpoints, so "performance" always means the same thing company-wide:</p>
-        <div class="formula">Revenue booked → less direct cost of sale → Net Gross Profit (NGP) → less allocated opex → EBITDA → Collections (cash actually received)</div>
-        <p>NGP is used for attribution below the company level because it is directly traceable to a deal. EBITDA already has shared overhead baked in, so it is only meaningful once things are rolled up to department or company level. Collections is tracked as its own lens — profitable revenue that isn't collected isn't a return yet.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>2. Role-based KPI templates and weightage</h3>
-        <p>Each role has a KPI template: a financial vs. non-financial split, and KPI weights inside each group (each group sums to 100%). Templates are <b>stored configuration, not code</b> — see the KPI Weightage tab. The Director can change any role, Senior Managers the roles in their departments; a Manager can agree an individual split (within ±15 points of the template) and individual targets with a team member. Employees see their weightage but cannot change it. Every change needs a reason, can be previewed, and is audit-logged.</p>
-        <div class="formula">KPI points = group weight × KPI weight in group × min(actual ÷ target, 100%)      Overall = financial points + non-financial points
-e.g. Financial 60% × Revenue 50% = 30 pts possible; 91.6% of target → 27.5 pts</div>
-        <p>Default splits (illustrative starting points to agree with function heads): Sales 60/40 · Product Management 35/65 · Delivery 30/70 · Consulting 20/80 · Sales Support 10/90. Click any score in the app to see the full calculation.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>3. Real non-financial KPI definitions (Glocomp)</h3>
-        <p>These formulas are not illustrative — they were supplied by Glocomp as the actual non-financial measures each function is scored on, and they are the real-world version of the "non-financial" weights shown as illustrative percentages in section 2 above.</p>
-        <table class="data-table">
-          <thead><tr><th>Department</th><th>Measure</th><th>Formula</th></tr></thead>
-          <tbody>
-            <tr><td>Sales</td><td>Customer Retention</td><td>(Existing customers − New customer losses) ÷ Starting customers</td></tr>
-            <tr><td rowspan="2">Sales Support</td><td>Order Accuracy</td><td>Orders without error ÷ Total orders</td></tr>
-            <tr><td>Renewal Admin Completion</td><td>Renewals finalised before deadline ÷ Total renewals due</td></tr>
-            <tr><td rowspan="2">Product Management</td><td>Deal Support Win Rate</td><td>Supported deals won ÷ Total supported deals</td></tr>
-            <tr><td>SLA Compliance</td><td>Requests resolved within SLA ÷ Total requests</td></tr>
-            <tr><td rowspan="2">Product Delivery</td><td>Customer CSAT</td><td>Sum of survey ratings ÷ Maximum possible rating</td></tr>
-            <tr><td>On-time Delivery</td><td>Delivered on time ÷ Total delivered</td></tr>
-            <tr><td>Consulting</td><td>Utilisation Rate</td><td>Chargeable hours ÷ Total working hours</td></tr>
-          </tbody>
-        </table>
-        <p class="card-sub" style="margin-top:8px;">Actuals for these formulas (order counts, SLA logs, survey ratings, timesheets) were not part of the uploaded dataset, so no computed scores are shown yet — wiring these up is the most direct "Phase 2" step, since the definitions themselves are already agreed.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>4. Cost coverage ratio</h3>
-        <p>Answers "is this contribution worth what we're paying for it?" — at whichever level you're looking at.</p>
-        <div class="formula">Cost Coverage Ratio = Commercial Contribution ÷ Total Employment Cost
-(Total Employment Cost = salary + commission/incentive paid + benefits + training + entertainment)</div>
-        <p>Company level uses EBITDA as the contribution figure (post-overhead, the real bottom line). Department and individual level use attributed NGP, since that is what the attribution matrix can fairly split. Thresholds: <b>below 1.0×</b> for two consecutive periods is flagged for review; 1.0–1.5× is acceptable; above 1.5× is healthy.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>5. Shared-contribution attribution (no double counting)</h3>
-        <p>Every deal or project's NGP is treated as a fixed pool worth exactly 100%. Before any deal closes, function heads agree a standard attribution template per deal type (new logo, renewal/upsell, project delivery, etc.) — e.g. a standard new-logo deal splits Sales 55% / Sales Support 30% / Product Management 10% / Consulting 5%. The template is applied automatically by deal type at close, not negotiated per deal, which is what prevents both double counting (the pool never exceeds 100%) and gaming (nobody argues their percentage after the fact). Each function's dashboard only ever shows its attributed share.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>6. Attribution governance</h3>
-        <p>The templates above aren't a static config file — they're versioned. A change is <b>forward-dated only</b>: it registers a new version that governs deals closing from a future quarter, and it can never rewrite the split a deal already closed under (Rulebook §8.3). Any change that would cut a function's share below what it currently gets needs sign-off before it can register — cutting someone's share isn't a quiet save. Registering a new version is a <b>Director setting</b> — visible to every management level, editable only by the Director (the "Governance edit" control next to the tabs).</p>
-        <table class="data-table" id="govTable"></table>
-      </div>
-
-      <div class="method-block">
-        <h3>7. Bonus vs. commission/incentive employees</h3>
-        <p>The dashboard tags every employee's pay structure and reads them differently: <b>bonus-based</b> employees are measured purely on weighted KPI achievement, which drives a bonus multiplier; <b>commission/incentive-based</b> employees are paid on a formula against commission-eligible revenue/NGP, but their KPI achievement is still tracked for visibility and coaching, it just isn't what determines their pay.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>8. What gets auto-flagged</h3>
-        <ul>
-          <li><b>Performance gap</b> — overall score below 70%; or 70–80% with a heavily weighted KPI under 85% of target; or a score that has declined four quarters running (HR Intervention tab, for the employee's management chain)</li>
-          <li><b>Pay equity</b> — base salary more than 10% below the role median (Director/HR only)</li>
-          <li><b>Income volatility</b> — commission staff with over 35% of OTE in variable pay (Director/HR only)</li>
-          <li>Cost coverage below 1.0× and project margin/collections issues (Company and Projects tabs, illustrative model)</li>
-        </ul>
-      </div>
-
-      <div class="method-block">
-        <h3>9. HR intervention workflow</h3>
-        <p>Every case is a chain of evidence, not a label: <b>performance gap → affected KPI → possible cause/context → suggested improvement action → manager review → escalation if required</b>. Causes come from the 4-quarter pattern, a peer comparison (team-wide vs. individual), leading indicators that are also below target and — at Executive/HR review only — the person's own survey signals.</p>
-        <p><b>Escalation:</b> Manager (records an action plan and review date, can escalate or resolve) → Senior Manager (can escalate, return to manager or resolve) → Executive/HR review (resolved · continue structured support · redeploy · end employment). The suggested stage comes from consecutive quarters below 75%; every move is manual and audit-logged. Cases are stored server-side; the CSV download is for hand-off.</p>
-      </div>
-
-      <div class="method-block">
-        <h3>10. ROI and AI-assisted KPIs</h3>
-        <div class="formula">ROI = (Return − Total cost) ÷ Total cost
-Return = attributed NGP · Total cost = salary + variable pay + approved expense claims + other employment cost</div>
-        <p>ROI details are on the ROI &amp; Cost tab (individual figures for the Director; aggregates of 5+ people for Senior Managers). AI KPI suggestions are generated from KPI history only and stay "pending review" until a manager edits, accepts and applies them — see the AI KPI Assistant tab and GLOCOMP.md.</p>
-      </div>
-    </section>
   </main>
+  </div><!-- /.app-main -->
 
   <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
 
@@ -349,6 +256,7 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
 </div>
 
 <script src="assets/gc.js"></script>
+<script src="assets/shell.js"></script>
 <script>
 (function () {
   "use strict";
@@ -839,7 +747,7 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     var collected = latest.revenue * latest.collRate;
     var uncollected = latest.revenue - collected;
 
-    document.getElementById("waterfallSub").textContent = latest.label + " · illustrative model (see Methodology, section 1)";
+    document.getElementById("waterfallSub").textContent = latest.label + "";
 
     // Each step is either a "total" bar (from 0) or a "delta" bar (floats between a start and end value).
     var steps = [
@@ -1119,7 +1027,7 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
               '</td><td class="num">' + fmtMoney(r.salary_cost) + '</td><td class="num" title="' + esc(r.variable_basis) + '">' + fmtMoney(r.variable_cost) + '</td><td class="num">' + fmtMoney(r.expense_cost) + '</td><td class="num">' + fmtMoney(r.other_cost) +
               '</td><td class="num"><b>' + fmtMoney(r.total_cost) + '</b></td><td class="num">' + r.roi_pct.toFixed(0) + '%</td><td><button type="button" class="chip" data-claims="' + esc(r.id) + '">Claims →</button></td></tr>';
           }).join("") + "</tbody></table></div></div>"
-        : '<div class="notice lock"><b>Individual salary and expense figures are restricted to the Director.</b> As a senior manager you see the same ROI calculation aggregated to departments and teams of ' + d.min_group + "+ people, so no individual's pay can be inferred.</div>");
+        : "");
     host.querySelectorAll("[data-claims]").forEach(function (b) { b.addEventListener("click", function () { openClaims(b.dataset.claims); }); });
   }
   function openClaims(id) {
@@ -1157,7 +1065,6 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
         '<td><button type="button" class="chip" data-edit-person="' + esc(p.id) + '">' + (p.editable ? "Agree split / targets" : "View") + "</button></td></tr>";
     }).join("");
     host.innerHTML =
-      '<div class="notice"><b>Who can change weightages?</b> ' + esc(d.rules) + "</div>" +
       '<div class="grid cols-2" style="margin-bottom:14px;align-items:start;">' +
         '<div class="card"><h3>Role templates</h3><p class="card-sub">Default financial vs. non-financial split and KPI weights for everyone in a role</p><div class="tscroll"><table class="data-table"><thead><tr><th>Role</th><th class="num">People</th><th>Fin. / non-fin.</th><th></th></tr></thead><tbody>' + roleRows + "</tbody></table></div></div>" +
         '<div class="card"><h3>Individual agreements</h3><p class="card-sub">Split and targets agreed between a manager and an employee (overrides the template)</p><div class="tscroll"><table class="data-table"><thead><tr><th>Employee</th><th>Fin. / non-fin.</th><th>Source</th><th></th></tr></thead><tbody>' + (peopleRows || '<tr><td colspan="4" class="muted">No one in your scope.</td></tr>') + "</tbody></table></div></div>" +
@@ -1270,8 +1177,6 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     var host = document.getElementById("aiContent");
     host.innerHTML =
       '<div class="stepper" id="aiStepper"></div>' +
-      '<div class="notice"><b>The AI never assigns KPIs on its own.</b> Suggestions are stored as "pending review" and have no effect on anyone\'s score until a manager accepts and applies them. ' +
-      '<span id="aiEngine">Engine: …</span> It only sees KPI history, the role\'s KPI library and peer medians — never names, pay, expenses or survey answers.</div>' +
       '<div class="row" style="margin-bottom:14px;"><label class="field" style="min-width:280px;"><span>Team member</span><select id="aiPerson">' +
       aiState.people.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === aiState.selected ? " selected" : "") + ">" + esc(p.name) + " — " + esc(p.title) + "</option>"; }).join("") +
       '</select></label><span class="spacer"></span><button class="btn primary" type="button" id="aiGenerate">Generate suggestions from history</button></div><div id="aiBody"><p class="loading">Loading…</p></div>';
@@ -1474,7 +1379,6 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
       var m = res[0], au = res[1];
       var lvlIdx = { director: 1, senior_manager: 2, manager: 3, employee: 4 }[m.your_level];
       document.getElementById("accessContent").innerHTML =
-        '<div class="notice">You are signed in as <b>' + esc(SESSION.user.name) + "</b> (" + GC.levelLabel[SESSION.user.level] + "). Your column is highlighted. These rules are enforced on the server for every request — see SECURITY.md and the <a href=\"/architecture\">architecture &amp; data-flow diagram</a>.</div>" +
         '<div class="card" style="margin-bottom:14px;"><h3>What each level can see and do</h3><div class="tscroll"><table class="data-table matrix"><thead><tr><th>Data / capability</th>' + m.levels.map(function (l, i) { return '<th class="' + (i + 1 === lvlIdx ? "you" : "") + '">' + l + "</th>"; }).join("") + "</tr></thead><tbody>" +
         m.rows.map(function (r) { return "<tr>" + r.map(function (c, i) { return '<td class="' + (i === lvlIdx ? "you" : "") + '">' + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div></div>" +
         '<div class="card"><h3>Audit log</h3><p class="card-sub">Weightage changes, AI approvals, HR case actions, sign-ins and sensitive reads — newest first (' + (SESSION.user.level === "manager" ? "your own actions" : "your scope") + ")</p>" +
@@ -1518,21 +1422,8 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     });
   }
 
-  /* ---------------- render: governance table (Methodology tab) ---------------- */
+  /* ---------------- governance version badge (top bar; editing via "Governance edit") ---------------- */
   function renderGovernanceTable() {
-    var table = document.getElementById("govTable");
-    var rows = dealTypes.map(function (dt) {
-      var av = activeVersion(dt.id);
-      // Attribution governance is a Director setting (it reads company NGP history, which only the Director may load).
-      var action = SESSION && SESSION.user.level === "director" ? '<button class="gov-edit-btn" type="button" data-deal="' + dt.id + '">Edit →</button>' : '<span class="muted" style="font-size:11.5px;">Director edits</span>';
-      return "<tr><td>" + dt.label + '</td><td><span class="gov-version-tag">' + av.id + "</span></td><td>" + av.effectiveFrom +
-        '</td><td style="text-align:right;">' + action + "</td></tr>";
-    }).join("");
-    table.innerHTML = '<thead><tr><th>Deal type</th><th>Active version</th><th>Effective from</th><th></th></tr></thead><tbody>' + rows + "</tbody>";
-    table.querySelectorAll(".gov-edit-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { loadCompany().then(function () { openGovModal(btn.dataset.deal); }); });
-    });
-
     var badgeTag = document.getElementById("govHeaderVersionTag");
     if (badgeTag) badgeTag.textContent = activeVersion(dealTypes[0].id).id;
   }
@@ -1824,11 +1715,10 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     weights: loadWeights,
     ai_kpi: loadAi,
     projects: function () { return GC.api("/api/projects").then(function (d) { projects = d.projects; renderProjectsView(); }); },
-    access: loadAccess,
-    methodology: function () { renderGovernanceTable(); return Promise.resolve(); }
+    access: loadAccess
   };
   var VIEW_HOST = { company: "companyStats", departments: "deptScoreTable", roi: "roiContent", individuals: "indivTable", performance: "perfContent", hr: "hrManagerCards",
-    weights: "weightsContent", ai_kpi: "aiContent", projects: "projectList", access: "accessContent", methodology: "govTable" };
+    weights: "weightsContent", ai_kpi: "aiContent", projects: "projectList", access: "accessContent" };
   var loadedViews = {};
   function ensureView(view) {
     if (loadedViews[view] || !VIEW_LOADERS[view]) return;
@@ -1942,8 +1832,7 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     if (s.user.level === "employee") { window.location.replace("/employee"); return; }
     SESSION = s;
     var u = s.user;
-    document.getElementById("userChip").innerHTML = '<span class="level-pill">' + GC.levelLabel[u.level] + "</span><b>" + esc(u.name) + "</b>" + esc(u.title) +
-      (u.scope_depts && u.scope_depts.length && u.level !== "manager" ? " · " + esc(u.scope_depts.join(", ")) : "");
+    document.getElementById("userChip").innerHTML = GC.profileHtml(u);
     document.getElementById("scopeLine").textContent = {
       director: "Company-wide view — performance, ROI, cost, salary and expense information for all departments.",
       senior_manager: "Your departments (" + u.scope_depts.join(", ") + ") — aggregated performance, KPI results and aggregated ROI/cost. Individual pay is not available at this level.",
@@ -1953,6 +1842,7 @@ Return = attributed NGP · Total cost = salary + variable pay + approved expense
     document.querySelectorAll("nav.tabs button").forEach(function (b) { if (s.nav.indexOf(b.dataset.view) === -1) b.remove(); });
     document.querySelectorAll("main .view").forEach(function (sec) { if (s.nav.indexOf(sec.id.replace("view-", "")) === -1) sec.remove(); });
     document.getElementById("govToolbar").hidden = u.level !== "director";
+    if (u.level === "director") renderGovernanceTable();   // fills the top-bar attribution version badge
     applyStateFromUrl();
   }).catch(function (e) { document.querySelector("main").innerHTML = '<p class="err">' + esc(e.message) + "</p>"; });
 })();

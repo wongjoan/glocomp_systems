@@ -1,6 +1,6 @@
 """Local development server: serves the public HTML pages and routes /api/* to the same router Vercel runs.
 
-    python dev_server.py            -> http://localhost:8000   (access code: glocomp-demo)
+    python dev_server.py            -> http://localhost:8000   (demo codes: director-demo / senior-demo / manager-demo / employee-demo)
 
 Only an explicit allow-list of public files is served, mirroring production: nothing under api/, data/ or scripts/
 is reachable from the browser.
@@ -24,13 +24,14 @@ sys.path.insert(0, os.path.join(ROOT, "api"))
 from _lib import router  # noqa: E402
 
 PUBLIC = {"/": "login.html", "/login": "login.html", "/employer": "index.html", "/dashboard": "index.html",
-          "/employee": "employee-dashboard.html", "/architecture": "architecture.html"}
-PUBLIC.update({"/" + f: f for f in ("login.html", "index.html", "employee-dashboard.html", "architecture.html",
-                                    "assets/base.css", "assets/gc.css", "assets/gc.js")})
+          "/employee": "employee-dashboard.html"}
+PUBLIC.update({"/" + f: f for f in ("login.html", "index.html", "employee-dashboard.html",
+                                    "assets/base.css", "assets/gc.css", "assets/gc.js",
+                                    "assets/dashstack.css", "assets/shell.js")})
 TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
 SECURITY_HEADERS = [
     ("X-Content-Type-Options", "nosniff"), ("X-Frame-Options", "DENY"), ("Referrer-Policy", "no-referrer"),
-    ("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"),
+    ("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"),
 ]
 
 
@@ -73,7 +74,7 @@ class Dev(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
-    print("Glocomp demo on http://localhost:%d  (access code: glocomp-demo)" % port)
+    print("Glocomp demo on http://localhost:%d  (demo codes: director-demo / senior-demo / manager-demo / employee-demo)" % port)
     from _lib import ai_kpi  # noqa: E402
     print("AI KPI engine: %s" % ai_kpi.active_engine())
     ThreadingHTTPServer(("127.0.0.1", port), Dev).serve_forever()

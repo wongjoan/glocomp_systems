@@ -39,13 +39,24 @@ def _secret():
     return _dev_secret  # local dev: random per process, so sessions reset on restart
 
 
-def access_code():
-    code = os.environ.get("DEMO_ACCESS_CODE")
+# Each hierarchy level has its own demo code, so sharing the Employee code with an audience
+# never lets anyone sign in as a Manager, Senior Manager or the Director.
+LEVEL_CODE_ENV = {
+    "director": "DEMO_CODE_DIRECTOR",
+    "senior_manager": "DEMO_CODE_SENIOR_MANAGER",
+    "manager": "DEMO_CODE_MANAGER",
+    "employee": "DEMO_CODE_EMPLOYEE",
+}
+DEV_LEVEL_CODES = {"director": "director-demo", "senior_manager": "senior-demo", "manager": "manager-demo", "employee": "employee-demo"}
+
+
+def access_code(level):
+    code = os.environ.get(LEVEL_CODE_ENV[level])
     if code:
         return code
     if is_production():
-        raise ConfigError("DEMO_ACCESS_CODE is not configured")
-    return "glocomp-demo"
+        raise ConfigError("%s is not configured" % LEVEL_CODE_ENV[level])
+    return DEV_LEVEL_CODES[level]
 
 
 def _b64(b):
@@ -113,5 +124,5 @@ def record_attempt(ip):
     _attempts.setdefault(ip, []).append(time.time())
 
 
-def check_code(given):
-    return hmac.compare_digest((given or "").encode(), access_code().encode())
+def check_code(given, level):
+    return hmac.compare_digest((given or "").encode(), access_code(level).encode())

@@ -60,8 +60,18 @@ class Api(unittest.TestCase):
     def test_login_requires_access_code(self):
         s, _ = self.call("POST", "/api/login", body={"user_id": DIRECTOR, "access_code": "wrong"})
         self.assertEqual(s, 401)
-        s, _ = self.call("POST", "/api/login", body={"user_id": DIRECTOR, "access_code": "glocomp-demo"})
+        s, _ = self.call("POST", "/api/login", body={"user_id": DIRECTOR, "access_code": "director-demo"})
         self.assertEqual(s, 200)
+
+    def test_each_level_has_its_own_code(self):
+        emp = self.emp_sales["id"]
+        self.assertEqual(self.call("POST", "/api/login", body={"user_id": emp, "access_code": "employee-demo"})[0], 200)
+        # a lower level's code must never unlock a higher level (and vice versa)
+        for uid, wrong in ((DIRECTOR, "employee-demo"), (DIRECTOR, "manager-demo"), (SM_SALES, "manager-demo"),
+                           (MGR_SALES, "employee-demo"), (emp, "director-demo")):
+            self.assertEqual(self.call("POST", "/api/login", body={"user_id": uid, "access_code": wrong})[0], 401, (uid, wrong))
+        self.assertEqual(self.call("POST", "/api/login", body={"user_id": SM_SALES, "access_code": "senior-demo"})[0], 200)
+        self.assertEqual(self.call("POST", "/api/login", body={"user_id": MGR_SALES, "access_code": "manager-demo"})[0], 200)
 
     def test_cross_origin_post_refused(self):
         req = router.Request("POST", "/api/logout", {"Host": "localhost", "Origin": "https://evil.example", "Content-Type": "application/json"}, b"{}")

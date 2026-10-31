@@ -221,7 +221,16 @@
   GC.theme = function (root, btn) {
     var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     try { var saved = localStorage.getItem("gc-theme"); if (saved) dark = saved === "dark"; } catch (e) { /* storage unavailable */ }
-    function apply() { root.setAttribute("data-theme", dark ? "dark" : "light"); if (btn) btn.textContent = dark ? "Switch to light" : "Switch to dark"; }
+    function apply() {
+      root.setAttribute("data-theme", dark ? "dark" : "light");
+      if (!btn) return;
+      if (btn.classList.contains("icon-btn") && window.GCIcon) {   // top-bar icon toggle (DashStack shell)
+        btn.innerHTML = window.GCIcon(dark ? "sun" : "moon");
+        btn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+      } else {
+        btn.textContent = dark ? "Switch to light" : "Switch to dark";
+      }
+    }
     if (btn) btn.addEventListener("click", function () { dark = !dark; try { localStorage.setItem("gc-theme", dark ? "dark" : "light"); } catch (e) { /* ignore */ } apply(); });
     apply();
   };
@@ -231,6 +240,13 @@
   };
 
   GC.levelLabel = { director: "Director", senior_manager: "Senior Manager", manager: "Manager", employee: "Employee" };
+
+  // Top-bar profile (avatar initials, name, role) for the DashStack shell.
+  GC.profileHtml = function (u) {
+    var initials = String(u.name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+    return '<span class="tb-avatar" aria-hidden="true">' + GC.esc(initials) + '</span><span class="tb-who"><b>' + GC.esc(u.name) + "</b><span>" +
+      GC.esc(GC.levelLabel[u.level] || "") + (u.title ? " · " + GC.esc(u.title) : "") + "</span></span>";
+  };
 
   window.GC = GC;
 })();

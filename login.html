@@ -3,45 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Glocomp Performance — Sign in</title>
+<title>Sign in — Glocomp</title>
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/gc.css">
-<style>
-  .login-wrap { max-width: 760px; margin: 0 auto; padding: 36px 16px 60px; }
-  .persona { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 10px 0 16px; }
-  @media (max-width: 680px) { .persona { grid-template-columns: 1fr; } }
-  .persona label { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; background: var(--surface-1); display: flex; gap: 8px; align-items: flex-start; }
-  .persona label:has(input:checked) { border-color: var(--series-1); background: color-mix(in srgb, var(--series-1) 7%, var(--surface-1)); }
-  .persona .n { font-weight: 650; font-size: 13px; }
-  .persona .t { font-size: 11.5px; color: var(--text-muted); }
-</style>
+<link rel="stylesheet" href="assets/dashstack.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap">
 </head>
 <body>
-<div class="viz-root" id="root">
-  <div class="login-wrap">
-    <h1 style="font-size:20px;margin:0 0 4px;">Glocomp commercial performance &amp; ROI</h1>
-    <p class="card-sub" style="font-size:13px;">Prototype · anonymised demo data · what you can see is decided by the server from your role</p>
-    <div class="card" style="margin-top:16px;">
-      <h3>Sign in as a demo persona</h3>
-      <p class="card-sub">Pick a level of the hierarchy to see exactly what that person is allowed to see.</p>
-      <form id="loginForm">
-        <div class="persona" id="featured"></div>
-        <div class="field" style="margin-bottom:12px;">
-          <span>…or any employee</span>
-          <select id="employeePick"><option value="">Choose an employee</option></select>
-        </div>
-        <div class="field" style="margin-bottom:12px;">
-          <span>Demo access code</span>
-          <input id="code" type="password" autocomplete="off" required>
-          <span class="muted" id="codeHint"></span>
-        </div>
-        <div class="row"><button class="btn primary" type="submit">Sign in</button><span class="err" id="loginErr"></span></div>
-      </form>
-    </div>
-    <div class="notice lock" style="margin-top:14px;">
-      <b>Prototype sign-in.</b> A shared access code plus persona choice stands in for company SSO (see SECURITY.md). The session is an HttpOnly signed cookie;
-      role and scope are re-checked on the server for every request, so changing the URL or page state cannot widen access.
-    </div>
+<div class="viz-root auth-page" id="root">
+  <div class="auth-card">
+    <div class="row" style="justify-content:center;margin-bottom:18px;"><span class="sb-logo">G</span><span class="sb-name">Glo<b>comp</b></span></div>
+    <h1>Login to Account</h1>
+    <p class="auth-sub">Commercial performance &amp; ROI · choose a role, then enter that role's demo code</p>
+    <form id="loginForm">
+      <div class="field"><span style="font-weight:700;color:var(--text-primary);">Demo persona</span></div>
+      <div class="persona" id="featured" role="radiogroup" aria-label="Demo persona"></div>
+      <label class="field" style="margin-bottom:14px;">
+        <span style="font-weight:700;color:var(--text-primary);">…or any employee</span>
+        <select id="employeePick"><option value="">Choose an employee</option></select>
+      </label>
+      <label class="field" style="margin-bottom:6px;">
+        <span style="font-weight:700;color:var(--text-primary);" id="codeLabel">Demo code</span>
+        <input id="code" type="password" autocomplete="off" required style="height:46px;">
+      </label>
+      <p class="code-for" id="codeFor"></p>
+      <p class="code-for" id="codeHint"></p>
+      <button class="btn primary" type="submit">Sign In</button>
+      <p class="err" id="loginErr" role="alert" style="text-align:center;min-height:18px;margin:10px 0 0;"></p>
+    </form>
   </div>
 </div>
 <script src="assets/gc.js"></script>
@@ -50,27 +41,43 @@
   "use strict";
   GC.theme(document.getElementById("root"));
   var featured = document.getElementById("featured"), pick = document.getElementById("employeePick");
+  var levels = {};   // persona id -> level, so the code prompt can name the right role
+
+  function selectedId() {
+    var sel = featured.querySelector("input:checked");
+    return pick.value || (sel && sel.value);
+  }
+  function updateCodePrompt() {
+    var lvl = levels[selectedId()];
+    var label = lvl ? GC.levelLabel[lvl] : "";
+    document.getElementById("codeLabel").textContent = label ? label + " demo code" : "Demo code";
+    document.getElementById("codeFor").innerHTML = label ? "Signing in as a <b>" + GC.esc(label) + "</b> — use the " + GC.esc(label.toLowerCase()) + " code." : "";
+  }
+
   GC.api("/api/personas", { noRedirect: true }).then(function (d) {
     featured.innerHTML = d.featured.map(function (p, i) {
+      levels[p.id] = p.level;
       return '<label><input type="radio" name="persona" value="' + GC.esc(p.id) + '"' + (i === 0 ? " checked" : "") + '><span><span class="level-pill">' +
         GC.levelLabel[p.level] + '</span><div class="n">' + GC.esc(p.name) + '</div><div class="t">' + GC.esc(p.title) + "</div></span></label>";
     }).join("");
     pick.innerHTML += d.employees.map(function (p) {
+      levels[p.id] = p.level;
       return '<option value="' + GC.esc(p.id) + '">' + GC.esc(p.name) + " — " + GC.esc(p.title) + " (" + GC.esc(p.dept) + ")</option>";
     }).join("");
-    document.getElementById("codeHint").textContent = d.access_code_hint || "Ask the demo owner for the access code.";
+    document.getElementById("codeHint").textContent = d.access_code_hint || "";
+    updateCodePrompt();
   }).catch(function (e) { document.getElementById("loginErr").textContent = e.message; });
+
   pick.addEventListener("change", function () {
-    featured.querySelectorAll("input").forEach(function (i) { i.checked = false; });
+    if (pick.value) featured.querySelectorAll("input").forEach(function (i) { i.checked = false; });
+    updateCodePrompt();
   });
-  featured.addEventListener("change", function () { pick.value = ""; });
+  featured.addEventListener("change", function () { pick.value = ""; updateCodePrompt(); });
   document.getElementById("loginForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var sel = featured.querySelector("input:checked");
-    var uid = pick.value || (sel && sel.value);
     var err = document.getElementById("loginErr");
     err.textContent = "";
-    GC.api("/api/login", { body: { user_id: uid, access_code: document.getElementById("code").value }, noRedirect: true }).then(function (r) {
+    GC.api("/api/login", { body: { user_id: selectedId(), access_code: document.getElementById("code").value }, noRedirect: true }).then(function (r) {
       window.location.href = r.level === "employee" ? "/employee" : "/dashboard";
     }).catch(function (ex) { err.textContent = ex.message; });
   });

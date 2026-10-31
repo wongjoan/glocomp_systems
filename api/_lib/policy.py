@@ -127,7 +127,7 @@ def nav_for(actor):
     tabs += ["performance", "hr", "weights", "ai_kpi"]
     if lvl in ("director", "senior_manager"):
         tabs += ["projects"]
-    tabs += ["access", "methodology"]
+    tabs += ["access"]
     return tabs
 
 

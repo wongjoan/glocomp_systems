@@ -120,7 +120,8 @@ def _cards(users):
 def personas(req):
     feat = [_public_user(store.user(i)) for i in FEATURED]
     emps = sorted((_public_user(u) for u in store.employees() if u["level"] == "employee"), key=lambda x: (x["dept"], x["name"]))
-    return {"featured": feat, "employees": emps, "access_code_hint": None if auth.is_production() else "Local dev access code: glocomp-demo"}
+    hint = None if auth.is_production() else "Local dev codes — Director: director-demo · Senior Manager: senior-demo · Manager: manager-demo · Employee: employee-demo"
+    return {"featured": feat, "employees": emps, "access_code_hint": hint}
 
 
 @route("POST", "/api/login", auth_required=False)
@@ -130,8 +131,9 @@ def login(req):
     body = req.json()
     auth.record_attempt(req.ip)
     u = store.user(body.get("user_id") or "")
-    if not u or not auth.check_code(body.get("access_code")):
-        raise HttpError(401, "Invalid access code or user")
+    # The code must match the chosen persona's level; the same generic error is returned either way.
+    if not u or not auth.check_code(body.get("access_code"), u["level"]):
+        raise HttpError(401, "Invalid access code for this role")
     store.audit(u, "auth.login", u["id"], {})
     return _json(200, {"ok": True, "level": u["level"]}, [("Set-Cookie", auth.cookie_header(auth.issue(u["id"]), req.secure))])
 

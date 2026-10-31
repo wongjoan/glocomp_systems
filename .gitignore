@@ -6,3 +6,6 @@ data/runtime/
 data/source/
 .vercel/
 .env*
+
+# local editor / Claude settings (removed from the repo on purpose)
+.claude/

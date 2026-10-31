@@ -6,24 +6,39 @@
 <title>My Performance — Glocomp</title>
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/gc.css">
+<link rel="stylesheet" href="assets/dashstack.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap">
 </head>
 <body>
-<div class="viz-root" id="root">
-  <header class="app-header">
-    <div>
-      <h1>My Performance</h1>
-      <p class="sub" id="who">Loading…</p>
-      <span class="tag">Anonymised demo data · your own scorecard only · no pay information is shown on this page</span>
+<div class="viz-root app-shell" id="root">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <div class="sb-brand"><span class="sb-logo">G</span><span class="sb-name">Glo<b>comp</b></span></div>
+    <nav class="sb-nav" aria-label="Pages">
+      <span class="sb-indicator" aria-hidden="true"></span>
+      <div class="sb-group">Me</div>
+      <a class="sb-item active" href="/employee" aria-current="page"><i class="sb-ico" data-icon="me"></i><span class="sb-label">My Performance</span></a>
+      <a class="sb-item" id="toDashboard" href="/dashboard" hidden><i class="sb-ico" data-icon="dashboard"></i><span class="sb-label">Management dashboard</span></a>
+    </nav>
+    <div class="sb-footer">
+      <button class="sb-link" id="logoutBtn" type="button"><i class="sb-ico" data-icon="logout"></i><span class="sb-label">Sign out</span></button>
+      <button class="sb-link sb-collapse" id="sbCollapse" type="button"><i class="sb-ico" data-icon="collapse"></i><span class="sb-label">Collapse</span></button>
     </div>
-    <div class="header-controls">
-      <a class="gov-header-btn" id="toDashboard" href="/dashboard" style="text-decoration:none;" hidden>Management dashboard →</a>
-      <button class="theme-toggle" id="themeToggle" type="button">Switch to dark</button>
-      <button class="btn" id="logoutBtn" type="button">Sign out</button>
-    </div>
-  </header>
-  <main id="meContent"><p class="loading">Loading your scorecard…</p></main>
+  </aside>
+  <div class="sb-backdrop"></div>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="icon-btn" id="sbToggle" type="button" aria-label="Toggle navigation" aria-controls="sidebar" aria-expanded="true"><i data-icon="menu"></i></button>
+      <div class="tb-title"><h1 id="pageTitle">My Performance</h1><p id="who">Loading…</p></div>
+      <button class="icon-btn" id="themeToggle" type="button" aria-label="Switch to dark mode"><i data-icon="moon"></i></button>
+      <div class="tb-profile" id="userChip"><span class="tb-avatar">…</span><span class="tb-who"><b>Signing in…</b><span></span></span></div>
+    </header>
+    <main id="meContent"><p class="loading">Loading your scorecard…</p></main>
+  </div>
 </div>
 <script src="assets/gc.js"></script>
+<script src="assets/shell.js"></script>
 <script>
 (function () {
   "use strict";
@@ -32,6 +47,7 @@
   var host = document.getElementById("meContent");
 
   GC.api("/api/session").then(function (s) {
+    document.getElementById("userChip").innerHTML = GC.profileHtml(s.user);
     if (s.user.level !== "employee") document.getElementById("toDashboard").hidden = false;
     if (s.user.level === "director") {
       host.innerHTML = '<div class="notice">The Director is not scored in this prototype. <a href="/dashboard">Open the management dashboard →</a></div>';
@@ -41,20 +57,19 @@
   }).catch(function (e) { host.innerHTML = '<p class="err">' + GC.esc(e.message) + "</p>"; });
 
   function render(card, s) {
-    document.getElementById("who").textContent = card.employee.name + " · " + card.employee.title + " · " + card.employee.dept + " · Period " + card.period;
+    document.getElementById("who").textContent = card.employee.name + " · " + card.employee.title + " · " + card.employee.dept + " · " + card.period + " · anonymised demo data, no pay information";
     var focus = card.improvement_focus;
     host.innerHTML =
       GC.scoreTiles(card) +
-      '<div class="grid cols-2" style="margin-bottom:14px;">' +
-        GC.weightCard(card, { readOnlyNote: "<b>View only.</b> Weightage and targets are set by the role template or agreed with your manager" +
-          (card.agreed_with ? " (" + GC.esc(card.agreed_with) + ")" : "") + ". To discuss a change, raise it in your next 1:1 — every change is recorded in an audit log." }) +
+      '<div class="grid cols-2" style="margin-bottom:20px;">' +
+        GC.weightCard(card, { readOnlyNote: "<b>View only</b> — agreed with " + GC.esc(card.agreed_with || "your manager") + "." }) +
         '<div class="card"><h3>Progress over the last 4 quarters</h3><p class="card-sub">Your overall score each quarter, calculated with your current weightage</p>' +
           GC.spark(card.trend, 360, 90) +
           '<table class="data-table" style="margin-top:8px;"><tbody>' + card.trend.map(function (t) {
             return "<tr><td>" + t.period + "</td><td>" + GC.meter(t.overall) + "</td></tr>";
           }).join("") + "</tbody></table></div>" +
       "</div>" +
-      '<div class="card" style="margin-bottom:14px;"><div class="card-head"><div><h3>KPI breakdown</h3>' +
+      '<div class="card" style="margin-bottom:20px;"><div class="card-head"><div><h3>KPI breakdown</h3>' +
         '<p class="card-sub">Targets agreed with ' + GC.esc(card.agreed_with || "your manager") + " · highlighted row = biggest gap</p></div>" +
         '<button class="table-toggle" type="button" data-explain="overall">Explain my score</button></div>' + GC.kpiTable(card) + "</div>" +
       (focus && focus.length
