@@ -11,3 +11,5 @@ data/source/
 .claude/
 # screenshots captured for the slide deck
 deck-screenshots/
+# recorded demo video (local only)
+demo-video/

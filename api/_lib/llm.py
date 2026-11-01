@@ -8,6 +8,8 @@ Configured entirely by environment variables; with no API key set, `configured()
     LLM_MODEL      model id; default for anthropic: claude-haiku-4-5 (fast + cheap). Required for "openai".
     LLM_BASE_URL   optional; default https://api.anthropic.com or https://api.openai.com/v1
     LLM_TIMEOUT    seconds, default 20 (keep below the Vercel maxDuration in vercel.json)
+    LLM_REASONING_EFFORT  optional, "openai" provider only: e.g. "low" for Gemini 3.x reasoning models
+                   (without it they can use up max_tokens on hidden reasoning and return no JSON)
 
 The key is only read server-side and is never logged or returned to the browser.
 """
@@ -75,9 +77,14 @@ def complete(system, user, max_tokens=2000):
             return "".join(b.get("text", "") for b in data["content"] if b.get("type") == "text")
         except (KeyError, TypeError):
             raise LLMError("Unexpected Anthropic response shape")
-    data = _post(base + "/chat/completions", {"authorization": "Bearer " + _key()},
-                 {"model": model(), "max_tokens": max_tokens, "temperature": 0.2,
-                  "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}, timeout)
+    payload = {"model": model(), "max_tokens": max_tokens, "temperature": 0.2,
+               "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+    # Reasoning models (e.g. Gemini 3.x) count hidden "thinking" against max_tokens; at their default effort they can
+    # spend the whole budget and return a truncated, non-JSON reply. LLM_REASONING_EFFORT=low keeps them fast and complete.
+    effort = (os.environ.get("LLM_REASONING_EFFORT") or "").strip().lower()
+    if effort:
+        payload["reasoning_effort"] = effort
+    data = _post(base + "/chat/completions", {"authorization": "Bearer " + _key()}, payload, timeout)
     try:
         return data["choices"][0]["message"]["content"] or ""
     except (KeyError, IndexError, TypeError):
