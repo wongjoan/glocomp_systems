@@ -175,7 +175,7 @@
       if (!ks.length) return '<p class="card-sub">No KPIs in this group.</p>';
       var rows = ks.map(function (k) {
         var credit = Math.min(k.attainment_pct, 100);
-        return "<tr" + (focus === b ? ' style="background:color-mix(in srgb,var(--series-1) 6%,transparent)"' : "") + "><td>" + GC.esc(k.name) + "</td>" +
+        return "<tr><td>" + GC.esc(k.name) + "</td>" +
           '<td class="num">' + GC.fmt(k.target, k.unit) + '</td><td class="num">' + GC.fmt(k.actual, k.unit) + "</td>" +
           '<td class="num">' + k.attainment_pct.toFixed(1) + "%</td>" +
           '<td class="calc">' + bw + "% × " + k.weight_in_bucket + "% = " + k.points_possible.toFixed(1) + " pts × " + credit.toFixed(1) + "%</td>" +
@@ -184,8 +184,28 @@
       return '<div class="tscroll"><table class="data-table"><thead><tr><th>KPI</th><th class="num">Target</th><th class="num">Actual</th><th class="num">Achieved</th><th>Calculation</th><th class="num">Points</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
         '<div class="sumline"><span>' + card.buckets[b].label + " subtotal</span><b>" + card.buckets[b].points.toFixed(1) + " of " + bw + " pts</b></div>";
     }
-    var lost = card.kpis.slice().sort(function (a, b) { return b.points_lost - a.points_lost; }).filter(function (k) { return k.points_lost > 0.05; });
+    // Financial / Non-financial tiles explain only their own group; Overall explains both.
+    var only = focus === "financial" || focus === "non_financial" ? focus : null;
+    var lost = card.kpis.slice().sort(function (a, b) { return b.points_lost - a.points_lost; })
+      .filter(function (k) { return k.points_lost > 0.05 && (!only || k.bucket === only); });
     var maxLost = lost.length ? lost[0].points_lost : 1;
+    function lostRows() {
+      return lost.length ? lost.map(function (k) {
+        return '<div class="lost-row"><span>' + GC.esc(k.name) + '</span><div class="track"><div style="width:' + (k.points_lost / maxLost * 100).toFixed(0) + '%"></div></div><span class="num" style="text-align:right">−' + k.points_lost.toFixed(1) + "</span></div>";
+      }).join("") : '<p class="card-sub">No points lost — every KPI met its target.</p>';
+    }
+    var first = card.employee.name ? card.employee.name.split(" ")[0] + "'s" : "this";
+    var sub = card.employee.title + " · " + card.period + " · every figure below comes from the agreed targets and recorded actuals";
+    if (only) {
+      var bk = card.buckets[only];
+      GC.openModal("How " + first + " " + bk.label.toLowerCase() + " score of " + bk.points.toFixed(1) + " of " + bk.weight + " was calculated", sub,
+        '<div class="explain-step"><h4>1 · Group weight</h4><p class="card-sub" style="margin:0;">' + bk.label + " KPIs carry <b>" + bk.weight + "%</b> of the overall score" +
+        (w.individual ? " (individually agreed split)" : " (role template split)") + ". Each KPI's weight inside the group is multiplied by this.</p></div>" +
+        '<div class="explain-step"><h4>2 · ' + bk.label + " KPIs</h4>" + bucketTable(only) + "</div>" +
+        '<div class="explain-step"><h4>3 · Where the missing ' + (bk.weight - bk.points).toFixed(1) + " points went</h4>" + lostRows() + "</div>" +
+        '<p class="card-sub">Rule: ' + GC.esc(card.formula.cap) + ". Open <b>Overall performance</b> to see both groups added together.</p>");
+      return;
+    }
     var html =
       '<div class="explain-step"><h4>1 · Weightage applied</h4>' + GC.weightBar(w.financial) +
       '<p class="card-sub" style="margin:4px 0 0;">' + (w.individual ? "Individually agreed split" + (w.agreed_by ? " (agreed with " + GC.esc(w.agreed_by) + ")" : "") : "Role template split") +
@@ -196,13 +216,10 @@
       " = <b>" + card.overall.toFixed(1) + "%</b> overall</div>" +
       '<p class="card-sub">Rule: ' + GC.esc(card.formula.cap) + ". Lower-is-better KPIs (e.g. days) use target ÷ actual.</p></div>" +
       '<div class="explain-step"><h4>5 · Where the missing ' + (100 - card.overall).toFixed(1) + " points went</h4>" +
-      (lost.length ? lost.map(function (k) {
-        return '<div class="lost-row"><span>' + GC.esc(k.name) + '</span><div class="track"><div style="width:' + (k.points_lost / maxLost * 100).toFixed(0) + '%"></div></div><span class="num" style="text-align:right">−' + k.points_lost.toFixed(1) + "</span></div>";
-      }).join("") : '<p class="card-sub">No points lost — every KPI met its target.</p>') + "</div>" +
+      lostRows() + "</div>" +
       '<div class="explain-step"><h4>6 · Trend with the same weights</h4><div class="row">' + GC.spark(card.trend, 220, 44) +
       '<span class="card-sub" style="margin:0;">' + card.trend.map(function (t) { return t.period + ": " + t.overall.toFixed(0) + "%"; }).join(" · ") + "</span></div></div>";
-    GC.openModal("How " + (card.employee.name ? card.employee.name.split(" ")[0] + "'s" : "this") + " " + card.overall.toFixed(0) + "% was calculated",
-      card.employee.title + " · " + card.period + " · every figure below comes from the agreed targets and recorded actuals", html);
+    GC.openModal("How " + first + " " + card.overall.toFixed(0) + "% was calculated", sub, html);
   };
 
   GC.wireExplain = function (host, card) {
