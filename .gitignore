@@ -13,3 +13,5 @@ data/source/
 deck-screenshots/
 # recorded demo video (local only)
 demo-video/
+# combined backup video (108 MB, over GitHub's 100 MB file limit)
+demo_backup/

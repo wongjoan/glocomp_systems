@@ -98,7 +98,7 @@ aside.sidebar nav.sb-nav > button:focus-visible, aside.sidebar .sb-link:focus-vi
 /* the sliding active pill (DashStack: filled blue item + accent bar at the sidebar edge) */
 .sb-indicator { position: absolute; left: 22px; right: 16px; top: 0; height: 44px; border-radius: 8px; background: var(--primary);
   box-shadow: 0 6px 16px rgba(72, 128, 255, .3); z-index: 0; opacity: 0; pointer-events: none;
-  transition: transform .32s cubic-bezier(.4, 0, .2, 1), height .32s, opacity .2s, left .28s, right .28s; }
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), height .2s, opacity .2s, left .28s, right .28s; }
 .sb-indicator::before { content: ""; position: absolute; left: -22px; top: 0; bottom: 0; width: 5px; border-radius: 0 4px 4px 0; background: var(--primary);
   transition: left .28s; }
 .sb-indicator.ready { opacity: 1; }

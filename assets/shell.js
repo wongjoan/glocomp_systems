@@ -87,6 +87,7 @@
     try { localStorage.setItem(KEY, on ? "1" : "0"); } catch (e) { /* ignore */ }
     var t = document.getElementById("sbToggle");
     if (t) t.setAttribute("aria-expanded", on ? "false" : "true");
+    moveIndicator();                  // group headings resize instantly, so the final position is known now: slide with the rail
     setTimeout(moveIndicator, 320);   // fallback if transitionend doesn't fire (e.g. reduced motion)
   }
   function setOpen(on) { shell.classList.toggle("sb-open", on); }
