@@ -191,6 +191,7 @@
             <p class="card-sub" id="hrCardSub"></p>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="search" id="hrSearch" aria-label="Search cases by name, role or department" placeholder="Search name, role or department…" style="font:inherit;font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--page-plane);color:var(--text-primary);min-width:240px;">
             <button type="button" class="chip" id="hrExportBtn">Download case log (CSV)</button>
           </div>
         </div>
@@ -198,6 +199,7 @@
         <div id="hrDetailWrap" hidden style="overflow-x:auto;">
           <table class="data-table" id="hrCaseTable"></table>
         </div>
+        <p class="card-sub" id="hrSearchCount" style="margin:8px 0 0;"></p>
       </div>
 
       <div class="card" style="margin-bottom:14px;"><h3>Team engagement themes</h3><p class="card-sub">Synthetic pulse survey, aggregated for everyone in your scope (n ≥ 5) — context for whether a gap is individual or environmental</p><div id="hrThemes"></div></div>
@@ -949,6 +951,30 @@
     return '<table class="data-table"><tbody>' + row("engagement", "Engagement") + row("manager_support", "Manager support") + row("workload", "Workload pressure (higher = worse)", true) +
       row("career_growth", "Career growth") + row("belonging", "Belonging") + "</tbody><caption>Latest pulse wave, " + t.respondents + " respondents · " + t.high_workload_share + "% report high workload · aggregated only (n ≥ 5)</caption></table>";
   }
+  /* ---------------- people search: filters rows already rendered (the server has already scoped them) ---------------- */
+  function searchInput(id, placeholder) {
+    return '<input type="search" id="' + id + '" aria-label="' + placeholder + '" placeholder="' + placeholder + '" style="font:inherit;font-size:12.5px;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--page-plane);color:var(--text-primary);min-width:240px;">';
+  }
+  function searchKey(parts) { return ' data-q="' + esc(parts.join(" ").toLowerCase()) + '"'; }
+  // scopes[0] is counted; any further scopes (e.g. the HR table behind the cards) are filtered the same way.
+  function wirePeopleSearch(inputId, scopes, countId) {
+    var inp = document.getElementById(inputId);
+    if (!inp) return;
+    function apply() {
+      var q = inp.value.trim().toLowerCase(), total = 0, shown = 0;
+      scopes.forEach(function (scope, i) {
+        scope.querySelectorAll("[data-q]").forEach(function (el) {
+          el.hidden = q !== "" && el.dataset.q.indexOf(q) === -1;
+          if (i === 0) { total++; if (!el.hidden) shown++; }
+        });
+      });
+      var c = countId && document.getElementById(countId);
+      if (c) c.textContent = !total ? "" : !q ? total + " people" : shown ? shown + " of " + total + " people" : "No one matches “" + inp.value.trim() + "”";
+    }
+    inp.oninput = apply;
+    apply();
+  }
+
   function renderPerformanceView() {
     var d = teamData;
     var host = document.getElementById("perfContent");
@@ -960,7 +986,7 @@
     }).join("");
     var rows = people.map(function (p) {
       var bg = p.biggest_gap ? esc(p.biggest_gap.name) + ' <span class="muted">(−' + p.biggest_gap.points_lost.toFixed(1) + " pts)</span>" : '<span class="muted">—</span>';
-      return '<tr><td><b>' + esc(p.employee.name) + '</b><div class="proj-meta">' + esc(p.employee.title) + " · " + esc(p.employee.dept) + "</div></td>" +
+      return "<tr" + searchKey([p.employee.name, p.employee.title, p.employee.dept]) + '><td><b>' + esc(p.employee.name) + '</b><div class="proj-meta">' + esc(p.employee.title) + " · " + esc(p.employee.dept) + "</div></td>" +
         "<td>" + GC.meter(p.overall) + "</td>" +
         '<td class="num">' + p.financial.points.toFixed(0) + ' <span class="muted">/ ' + p.financial.weight + "</span></td>" +
         '<td class="num">' + p.non_financial.points.toFixed(0) + ' <span class="muted">/ ' + p.non_financial.weight + "</span></td>" +
@@ -979,8 +1005,11 @@
         '<div class="card"><h3>By department</h3><p class="card-sub">Average scores using each person\'s current weightage</p><div class="tscroll"><table class="data-table"><thead><tr><th>Department</th><th class="num">People</th><th>Avg. overall</th><th class="num">Financial</th><th class="num">Non-fin.</th><th class="num">&lt;70%</th></tr></thead><tbody>' + deptRows + "</tbody></table></div></div>" +
         '<div class="card"><h3>Team engagement themes</h3><p class="card-sub">From the synthetic HR pulse survey — aggregated, never per person at this level</p>' + themesHtml(d.survey_themes) + "</div>" +
       "</div>" +
-      '<div class="card"><h3>Individual scorecards</h3><p class="card-sub">Sorted lowest score first. Open a scorecard for the full KPI breakdown, targets, gaps and the calculation. No pay data is shown here.</p>' +
-      '<div class="tscroll"><table class="data-table"><thead><tr><th>Employee</th><th>Overall</th><th class="num">Financial pts</th><th class="num">Non-fin. pts</th><th>Biggest gap</th><th>4-qtr trend</th><th>Weightage</th><th></th></tr></thead><tbody>' + rows + "</tbody></table></div></div>";
+      '<div class="card"><div class="card-head"><div><h3>Individual scorecards</h3><p class="card-sub">Sorted lowest score first. Open a scorecard for the full KPI breakdown, targets, gaps and the calculation. No pay data is shown here.</p></div>' +
+      searchInput("perfSearch", "Search name, role or department…") + "</div>" +
+      '<div class="tscroll"><table class="data-table" id="perfPeopleTable"><thead><tr><th>Employee</th><th>Overall</th><th class="num">Financial pts</th><th class="num">Non-fin. pts</th><th>Biggest gap</th><th>4-qtr trend</th><th>Weightage</th><th></th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<p class="card-sub" id="perfSearchCount" style="margin:8px 0 0;"></p></div>';
+    wirePeopleSearch("perfSearch", [document.getElementById("perfPeopleTable")], "perfSearchCount");
     wireOpenCard(host);
   }
 
@@ -1029,14 +1058,17 @@
       (d.teams.length ? '<div class="card" style="margin-bottom:14px;"><h3>By team</h3><p class="card-sub">Manager-led teams with ' + d.min_group + '+ direct reports</p><div class="tscroll"><table class="data-table">' + ROI_HEAD + "<tbody>" +
         d.teams.map(function (r) { return roiRow(r, esc(r.name) + '<div class="proj-meta">' + esc(r.dept) + "</div>"); }).join("") + "</tbody></table></div></div>" : "") +
       (d.individuals
-        ? '<div class="card"><h3>Individual cost base &amp; ROI <span class="level-pill">Director only</span></h3><p class="card-sub">Each person\'s own cost structure — commission vs. bonus, department expense profile, statutory rate. Open claims for the line items.</p>' +
+        ? '<div class="card"><div class="card-head"><div><h3>Individual cost base &amp; ROI <span class="level-pill">Director only</span></h3><p class="card-sub">Each person\'s own cost structure — commission vs. bonus, department expense profile, statutory rate. Open claims for the line items.</p></div>' +
+          searchInput("roiIndivSearch", "Search name, role, department or pay…") + "</div>" +
           '<div class="tscroll"><table class="data-table"><thead><tr><th>Employee</th><th>Pay</th><th class="num">Return</th><th class="num">Salary</th><th class="num">Variable</th><th class="num">Expenses</th><th class="num">Other</th><th class="num">Total</th><th class="num">ROI</th><th></th></tr></thead><tbody>' +
           d.individuals.slice().sort(function (a, b) { return a.roi_pct - b.roi_pct; }).map(function (r) {
-            return "<tr><td><b>" + esc(r.name) + '</b><div class="proj-meta">' + esc(r.title) + " · " + esc(r.dept) + '</div></td><td><span class="pay-pill">' + esc(r.pay_structure) + '</span></td><td class="num">' + fmtMoney(r.return) +
+            return "<tr" + searchKey([r.name, r.title, r.dept, r.pay_structure]) + "><td><b>" + esc(r.name) + '</b><div class="proj-meta">' + esc(r.title) + " · " + esc(r.dept) + '</div></td><td><span class="pay-pill">' + esc(r.pay_structure) + '</span></td><td class="num">' + fmtMoney(r.return) +
               '</td><td class="num">' + fmtMoney(r.salary_cost) + '</td><td class="num" title="' + esc(r.variable_basis) + '">' + fmtMoney(r.variable_cost) + '</td><td class="num">' + fmtMoney(r.expense_cost) + '</td><td class="num">' + fmtMoney(r.other_cost) +
               '</td><td class="num"><b>' + fmtMoney(r.total_cost) + '</b></td><td class="num">' + r.roi_pct.toFixed(0) + '%</td><td><button type="button" class="chip" data-claims="' + esc(r.id) + '">Claims →</button></td></tr>';
-          }).join("") + "</tbody></table></div></div>"
+          }).join("") + "</tbody></table></div>" +
+          '<p class="card-sub" id="roiIndivCount" style="margin:8px 0 0;"></p></div>'
         : "");
+    wirePeopleSearch("roiIndivSearch", [host], "roiIndivCount");
     host.querySelectorAll("[data-claims]").forEach(function (b) { b.addEventListener("click", function () { openClaims(b.dataset.claims); }); });
     fitBarLabels(host);
   }
@@ -1070,16 +1102,20 @@
         '<td><button type="button" class="chip" data-edit-role="' + esc(r.role_key) + '">' + (r.editable ? "Edit template" : "View") + "</button></td></tr>";
     }).join("");
     var peopleRows = d.people.map(function (p) {
-      return "<tr><td><b>" + esc(p.name) + '</b><div class="proj-meta">' + esc(p.title) + "</div></td><td>" + miniSplit(p.financial_weight) + "</td>" +
+      return "<tr" + searchKey([p.name, p.title, p.dept]) + "><td><b>" + esc(p.name) + '</b><div class="proj-meta">' + esc(p.title) + "</div></td><td>" + miniSplit(p.financial_weight) + "</td>" +
         "<td>" + (p.individual ? '<span class="src-tag">Individual</span><div class="proj-meta">' + esc(p.agreed_by || "") + " " + (p.agreed_at ? p.agreed_at.slice(0, 10) : "") + "</div>" : '<span class="src-tag">Role template</span>') + "</td>" +
         '<td><button type="button" class="chip" data-edit-person="' + esc(p.id) + '">' + (p.editable ? "Agree split / targets" : "View") + "</button></td></tr>";
     }).join("");
     host.innerHTML =
       '<div class="grid cols-2" style="margin-bottom:14px;align-items:start;">' +
         '<div class="card"><h3>Role templates</h3><p class="card-sub">Default financial vs. non-financial split and KPI weights for everyone in a role</p><div class="tscroll"><table class="data-table"><thead><tr><th>Role</th><th class="num">People</th><th>Fin. / non-fin.</th><th></th></tr></thead><tbody>' + roleRows + "</tbody></table></div></div>" +
-        '<div class="card"><h3>Individual agreements</h3><p class="card-sub">Split and targets agreed between a manager and an employee (overrides the template)</p><div class="tscroll"><table class="data-table"><thead><tr><th>Employee</th><th>Fin. / non-fin.</th><th>Source</th><th></th></tr></thead><tbody>' + (peopleRows || '<tr><td colspan="4" class="muted">No one in your scope.</td></tr>') + "</tbody></table></div></div>" +
+        '<div class="card"><h3>Individual agreements</h3><p class="card-sub">Split and targets agreed between a manager and an employee (overrides the template)</p>' +
+          (peopleRows ? '<div style="margin-bottom:8px;">' + searchInput("weightsSearch", "Search name, role or department…") + "</div>" : "") +
+          '<div class="tscroll"><table class="data-table" id="weightsPeopleTable"><thead><tr><th>Employee</th><th>Fin. / non-fin.</th><th>Source</th><th></th></tr></thead><tbody>' + (peopleRows || '<tr><td colspan="4" class="muted">No one in your scope.</td></tr>') + "</tbody></table></div>" +
+          '<p class="card-sub" id="weightsSearchCount" style="margin:8px 0 0;"></p></div>' +
       "</div>" +
       '<div class="card" id="weightEditor"><h3>Editor</h3><p class="card-sub" style="margin:0;">Choose a role template or an individual above.</p></div>';
+    wirePeopleSearch("weightsSearch", [document.getElementById("weightsPeopleTable")], "weightsSearchCount");
     host.querySelectorAll("[data-edit-role]").forEach(function (b) { b.addEventListener("click", function () { startEdit("role", b.dataset.editRole); }); });
     host.querySelectorAll("[data-edit-person]").forEach(function (b) { b.addEventListener("click", function () { startEdit("employee", b.dataset.editPerson); }); });
   }
@@ -1187,10 +1223,25 @@
     var host = document.getElementById("aiContent");
     host.innerHTML =
       '<div class="stepper" id="aiStepper"></div>' +
-      '<div class="row" style="margin-bottom:14px;"><label class="field" style="min-width:280px;"><span>Team member</span><select id="aiPerson">' +
-      aiState.people.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === aiState.selected ? " selected" : "") + ">" + esc(p.name) + " — " + esc(p.title) + "</option>"; }).join("") +
+      '<div class="row" style="margin-bottom:14px;align-items:flex-end;"><label class="field"><span>Find team member</span>' + searchInput("aiSearch", "Type a name, role or department…") +
+      '<small class="muted" id="aiSearchCount"></small></label>' +
+      '<label class="field" style="min-width:280px;"><span>Team member</span><select id="aiPerson">' +
+      aiState.people.map(function (p) { return "<option" + searchKey([p.name, p.title, p.dept || ""]) + ' value="' + esc(p.id) + '"' + (p.id === aiState.selected ? " selected" : "") + ">" + esc(p.name) + " — " + esc(p.title) + "</option>"; }).join("") +
       '</select></label><span class="spacer"></span><button class="btn primary" type="button" id="aiGenerate">Generate suggestions from history</button></div><div id="aiBody"><p class="loading">Loading…</p></div>';
-    document.getElementById("aiPerson").addEventListener("change", function (e) { loadAiFor(e.target.value); });
+    var aiSelect = document.getElementById("aiPerson");
+    aiSelect.addEventListener("change", function (e) { loadAiFor(e.target.value); });
+    wirePeopleSearch("aiSearch", [aiSelect], "aiSearchCount");
+    // If the search hides the person currently selected, switch to the first match (debounced, so typing doesn't fire a request per key).
+    var aiSearchTimer = null;
+    document.getElementById("aiSearch").addEventListener("input", function () {
+      clearTimeout(aiSearchTimer);
+      aiSearchTimer = setTimeout(function () {
+        var cur = aiSelect.options[aiSelect.selectedIndex];
+        if (cur && !cur.hidden) return;
+        var first = Array.prototype.filter.call(aiSelect.options, function (o) { return !o.hidden; })[0];
+        if (first) { aiSelect.value = first.value; loadAiFor(first.value); }
+      }, 350);
+    });
     document.getElementById("aiGenerate").addEventListener("click", function () {
       var btn = this; btn.disabled = true; btn.textContent = "Generating…";
       GC.api("/api/ai/generate", { body: { employee_id: aiState.selected } }).then(function (r) {
@@ -1320,7 +1371,7 @@
 
     var cardsHost = document.getElementById("hrManagerCards");
     cardsHost.innerHTML = cases.length ? cases.map(function (r) {
-      return '<div class="card" style="margin-bottom:12px;" data-hr-case="' + esc(r.employee.id) + '">' +
+      return '<div class="card" style="margin-bottom:12px;"' + searchKey([r.employee.name, r.employee.title, r.employee.dept]) + ' data-hr-case="' + esc(r.employee.id) + '">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;"><div><div style="font-weight:650;font-size:14px;">' + esc(r.employee.name) + '</div><div class="proj-meta">' + esc(r.employee.title) + " · " + esc(r.employee.dept) +
         (r.manager ? " · manager " + esc(r.manager.name) : "") + '</div></div><div class="row">' + badge(r.stage.kind, r.stage.label) + '<button type="button" class="chip" data-hr-report="' + esc(r.employee.id) + '">Full report →</button></div></div>' +
         hrFlowHtml(r) + hrControlsHtml(r) + "</div>";
@@ -1335,7 +1386,7 @@
         var ownerCell = r.allowed_actions.indexOf("set_owner") !== -1
           ? '<span data-hr-case="' + esc(r.employee.id) + '"><input type="text" class="inp" style="width:130px" data-in="owner" value="' + esc(r.case.owner) + '" placeholder="Assign owner"> <button type="button" class="chip" data-hr-act="set_owner">Set</button></span>'
           : esc(r.case.owner || "—");
-        return "<tr><td><b>" + esc(r.employee.name) + '</b><div class="proj-meta">' + esc(r.employee.title) + "</div></td><td>" + scoreBadge(r.summary.overall) + "</td><td>" + (k ? esc(k.name) + " (" + k.attainment_pct.toFixed(0) + "%)" : "—") + "</td><td>" + badge(r.stage.kind, r.stage.label) +
+        return "<tr" + searchKey([r.employee.name, r.employee.title, r.employee.dept]) + "><td><b>" + esc(r.employee.name) + '</b><div class="proj-meta">' + esc(r.employee.title) + "</div></td><td>" + scoreBadge(r.summary.overall) + "</td><td>" + (k ? esc(k.name) + " (" + k.attainment_pct.toFixed(0) + "%)" : "—") + "</td><td>" + badge(r.stage.kind, r.stage.label) +
           "</td><td>" + esc(hrData.stages.filter(function (s) { return s.id === r.assessment.suggested_stage; })[0].label) + "</td>" + (showPay ? "<td>" + hrFlagPillsHtml(r.pay_flags || []) + "</td>" : "") +
           "<td>" + ownerCell + '</td><td class="proj-meta">' + (last ? esc(last.by_name + " · " + last.action + " · " + last.at.slice(0, 10)) : "—") + '</td><td><button type="button" class="chip" data-hr-report="' + esc(r.employee.id) + '">Report →</button></td></tr>';
       }).join("") || '<tr><td colspan="9" class="muted">No open cases.</td></tr>') + "</tbody>";
@@ -1348,6 +1399,7 @@
       ? "Each case shows the gap, the KPI causing it, the likely cause, a suggested action and the review/escalation controls available to you"
       : "Tracker view — stage, suggested stage, owner and latest update for every case in your scope";
     document.querySelectorAll("#hrViewModeSeg button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.hrmode === (isSimple ? "simple" : "detail") ? "true" : "false"); });
+    wirePeopleSearch("hrSearch", [cardsHost, table], "hrSearchCount");   // re-applied after every refresh, so the filter survives case actions
     [cardsHost, table].forEach(function (h) {
       wireHrControls(h);
       h.querySelectorAll("[data-hr-report]").forEach(function (b) { b.addEventListener("click", function () { openHrReport(b.dataset.hrReport); }); });
