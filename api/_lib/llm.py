@@ -7,9 +7,10 @@ Configured entirely by environment variables; with no API key set, `configured()
     LLM_API_KEY    API key (ANTHROPIC_API_KEY / OPENAI_API_KEY are also accepted)
     LLM_MODEL      model id; default for anthropic: claude-haiku-4-5 (fast + cheap). Required for "openai".
     LLM_BASE_URL   optional; default https://api.anthropic.com or https://api.openai.com/v1
-    LLM_TIMEOUT    seconds, default 20 (keep below the Vercel maxDuration in vercel.json)
-    LLM_REASONING_EFFORT  optional, "openai" provider only: e.g. "low" for Gemini 3.x reasoning models
-                   (without it they can use up max_tokens on hidden reasoning and return no JSON)
+    LLM_TIMEOUT    seconds, default 25 (keep below the Vercel maxDuration of 30 in vercel.json)
+    LLM_REASONING_EFFORT  optional, "openai" provider only. Defaults to "low" on Gemini's endpoint, because Gemini 3.x
+                   reasoning models otherwise use up the output budget on hidden reasoning and return no JSON.
+                   "none-sent" omits the parameter (for providers that reject it).
 
 The key is only read server-side and is never logged or returned to the browser.
 """
@@ -67,7 +68,7 @@ def complete(system, user, max_tokens=2000):
     """Send one system + user prompt; return the model's text reply. Raises LLMError on any failure."""
     if not configured():
         raise LLMError("LLM not configured")
-    p, timeout = provider(), float(os.environ.get("LLM_TIMEOUT") or 20)
+    p, timeout = provider(), float(os.environ.get("LLM_TIMEOUT") or 25)
     base = (os.environ.get("LLM_BASE_URL") or DEFAULT_BASE[p]).rstrip("/")
     if p == "anthropic":
         data = _post(base + "/v1/messages", {"x-api-key": _key(), "anthropic-version": "2023-06-01"},
@@ -77,15 +78,24 @@ def complete(system, user, max_tokens=2000):
             return "".join(b.get("text", "") for b in data["content"] if b.get("type") == "text")
         except (KeyError, TypeError):
             raise LLMError("Unexpected Anthropic response shape")
+    # Reasoning models (e.g. Gemini 3.x) count hidden "thinking" against max_tokens; at their default effort they can
+    # spend the whole budget and return a truncated, non-JSON reply. So low effort is the default for
+    # Gemini's endpoint (override with LLM_REASONING_EFFORT; set it to "none-sent" to omit the parameter entirely).
+    effort = (os.environ.get("LLM_REASONING_EFFORT") or "").strip().lower()
+    if not effort and "generativelanguage.googleapis.com" in base:
+        effort = "low"
     payload = {"model": model(), "max_tokens": max_tokens, "temperature": 0.2,
                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
-    # Reasoning models (e.g. Gemini 3.x) count hidden "thinking" against max_tokens; at their default effort they can
-    # spend the whole budget and return a truncated, non-JSON reply. LLM_REASONING_EFFORT=low keeps them fast and complete.
-    effort = (os.environ.get("LLM_REASONING_EFFORT") or "").strip().lower()
-    if effort:
+    if effort and effort != "none-sent":
         payload["reasoning_effort"] = effort
     data = _post(base + "/chat/completions", {"authorization": "Bearer " + _key()}, payload, timeout)
     try:
-        return data["choices"][0]["message"]["content"] or ""
-    except (KeyError, IndexError, TypeError):
+        choice = data["choices"][0]
+        text = choice["message"].get("content") or ""
+    except (KeyError, IndexError, TypeError, AttributeError):
         raise LLMError("Unexpected OpenAI-compatible response shape")
+    if choice.get("finish_reason") == "length" or not text.strip():
+        # Name the cause in the fallback message (shown to the manager and written to the audit log).
+        raise LLMError("reply cut off (finish_reason=%s, model=%s, reasoning_effort=%s)"
+                       % (choice.get("finish_reason"), model(), payload.get("reasoning_effort", "unset")))
+    return text
