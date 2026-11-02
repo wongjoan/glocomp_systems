@@ -476,7 +476,7 @@
 
   /* ---------------- line chart (trend) ---------------- */
   function renderLineChart(hostEl, legendEl, tableEl, data, seriesDefs) {
-    var W = 640, H = 230, padL = 46, padR = 14, padT = 16, padB = 28;
+    var W = 640, H = 230, padL = 46, padR = 58, padT = 16, padB = 28;   // padR leaves room for the end-of-line value labels
     var plotW = W - padL - padR, plotH = H - padT - padB;
     var activeDefs = seriesDefs.filter(function (s) { return state.trendSeries[s.key]; });
     if (activeDefs.length === 0) activeDefs = seriesDefs;
@@ -504,6 +504,7 @@
     var crosshair = svgEl("line", { x1: padL, x2: padL, y1: padT, y2: padT + plotH, stroke: "var(--baseline)", "stroke-width": 1, opacity: 0 });
     svg.appendChild(crosshair);
 
+    var endLabels = [];
     activeDefs.forEach(function (s) {
       var pts = data.map(function (d, i) { return [xFor(i), yFor(d[s.key])]; });
       var path = svgEl("path", {
@@ -515,14 +516,21 @@
         svg.appendChild(svgEl("circle", { cx: p[0], cy: p[1], r: 4, fill: s.color, stroke: "var(--surface-1)", "stroke-width": 2 }));
       });
       var last = pts[pts.length - 1];
-      var lbl = svgEl("text", { x: last[0] + 7, y: last[1] + 4, "text-anchor": "start", class: "axis-label" });
+      var lbl = svgEl("text", { x: last[0] + 8, "text-anchor": "start", class: "axis-label" });
       lbl.textContent = fmtMoney(data[data.length - 1][s.key]);
       svg.appendChild(lbl);
+      endLabels.push({ el: lbl, y: last[1] + 4 });
+    });
+    // nudge end labels apart (top to bottom) so close values don't print on top of each other
+    endLabels.sort(function (a, b) { return a.y - b.y; });
+    endLabels.forEach(function (l, i) {
+      if (i > 0 && l.y < endLabels[i - 1].y + 12) l.y = endLabels[i - 1].y + 12;
+      l.el.setAttribute("y", l.y);
     });
 
-    var bandW = plotW / data.length;
+    var bandW = data.length > 1 ? plotW / (data.length - 1) : plotW;
     data.forEach(function (d, i) {
-      var rect = svgEl("rect", { x: padL + i * bandW, y: padT, width: bandW, height: plotH, fill: "transparent", tabindex: "0", role: "button", "aria-label": d.label });
+      var rect = svgEl("rect", { x: xFor(i) - bandW / 2, y: padT, width: bandW, height: plotH, fill: "transparent", tabindex: "0", role: "button", "aria-label": d.label });
       function reveal(clientX, clientY) {
         crosshair.setAttribute("x1", xFor(i)); crosshair.setAttribute("x2", xFor(i)); crosshair.setAttribute("opacity", 1);
         var rows = activeDefs.map(function (s) {
