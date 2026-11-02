@@ -317,8 +317,9 @@ def expenses(req):
 # ------------------------------------------------------------------ weightage
 
 def _role_rows(actor):
-    # Only the roles of people the actor supervises: never their own role or a peer's.
-    keys = sorted({store.role_key(u) for u in policy.supervised(actor)})
+    # Role templates are a senior manager / director tool: only roles the actor may edit (people they supervise, never
+    # their own role or a peer's). Managers get none; they agree individual splits for their direct reports only.
+    keys = sorted(k for k in {store.role_key(u) for u in policy.supervised(actor)} if policy.can_edit_role_template(actor, k))
     rows = []
     for rk in keys:
         dept, title = rk.split("/", 1)

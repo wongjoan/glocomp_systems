@@ -166,7 +166,7 @@ Sign in at `/login`. Local demo codes: `director-demo`, `senior-demo`, `manager-
    - **Performance** lists the 22-person team (lowest score first), with team survey themes in aggregate.
    - **HR Intervention** shows Kiran's case: gap → Revenue booked → causes (pipeline coverage and win rate are also low) → actions. Record a plan, then escalate. After that, the manager can no longer move the case.
    - **AI KPI Assistant**: generate suggestions for Kiran. Accept *Pipeline coverage* with an edited weight, reject one, then **Approve & apply**, and the score recalculates.
-   - **KPI Weightage**: role templates are view-only. Agree an individual split within ±15 points.
+   - **KPI Weightage**: only his own direct reports are listed (no role templates, no senior staff). Agree an individual split within ±15 points.
    - There are no pay or ROI tabs at this level.
 3. **Senior Manager** — *Wren Abbott (Senior Sales Manager)*.
    - Departments: Sales and Sales Support only.

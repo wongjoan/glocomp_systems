@@ -178,6 +178,8 @@ class Api(unittest.TestCase):
                 else:
                     self.assertIn(u["dept"], me["scope_depts"], (actor, p["name"]))
             self.assertNotIn(own_rk, {x["role_key"] for x in r["roles"]}, actor)
+            if me["level"] == "manager":
+                self.assertEqual(r["roles"], [], "role templates are a senior manager / director tool")
             # cannot change your own role's template (it would change your own score), nor your own split
             tpl = store.role_template(own_rk)
             body = {"role_key": own_rk, "financial_weight": tpl["financial_weight"], "kpi_weights": tpl["kpi_weights"], "reason": "own role"}

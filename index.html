@@ -1106,15 +1106,18 @@
         "<td>" + (p.individual ? '<span class="src-tag">Individual</span><div class="proj-meta">' + esc(p.agreed_by || "") + " " + (p.agreed_at ? p.agreed_at.slice(0, 10) : "") + "</div>" : '<span class="src-tag">Role template</span>') + "</td>" +
         '<td><button type="button" class="chip" data-edit-person="' + esc(p.id) + '">' + (p.editable ? "Agree split / targets" : "View") + "</button></td></tr>";
     }).join("");
+    // Managers get no role templates from the server (senior manager / director tool), so they see only their direct reports.
+    var hasRoles = d.roles.length > 0;
     host.innerHTML =
-      '<div class="grid cols-2" style="margin-bottom:14px;align-items:start;">' +
-        '<div class="card"><h3>Role templates</h3><p class="card-sub">Default financial vs. non-financial split and KPI weights for everyone in a role</p><div class="tscroll"><table class="data-table"><thead><tr><th>Role</th><th class="num">People</th><th>Fin. / non-fin.</th><th></th></tr></thead><tbody>' + roleRows + "</tbody></table></div></div>" +
-        '<div class="card"><h3>Individual agreements</h3><p class="card-sub">Split and targets agreed between a manager and an employee (overrides the template)</p>' +
+      '<div class="grid' + (hasRoles ? " cols-2" : "") + '" style="margin-bottom:14px;align-items:start;">' +
+        (hasRoles ? '<div class="card"><h3>Role templates</h3><p class="card-sub">Default financial vs. non-financial split and KPI weights for everyone in a role</p><div class="tscroll"><table class="data-table"><thead><tr><th>Role</th><th class="num">People</th><th>Fin. / non-fin.</th><th></th></tr></thead><tbody>' + roleRows + "</tbody></table></div></div>" : "") +
+        '<div class="card"><h3>' + (hasRoles ? "Individual agreements" : "Your direct reports") + '</h3><p class="card-sub">' +
+          (hasRoles ? "Split and targets agreed between a manager and an employee (overrides the template)" : "Agree each person's financial / non-financial split and targets, within ±" + d.manager_band + " points of their role template") + "</p>" +
           (peopleRows ? '<div style="margin-bottom:8px;">' + searchInput("weightsSearch", "Search name, role or department…") + "</div>" : "") +
           '<div class="tscroll"><table class="data-table" id="weightsPeopleTable"><thead><tr><th>Employee</th><th>Fin. / non-fin.</th><th>Source</th><th></th></tr></thead><tbody>' + (peopleRows || '<tr><td colspan="4" class="muted">No one in your scope.</td></tr>') + "</tbody></table></div>" +
           '<p class="card-sub" id="weightsSearchCount" style="margin:8px 0 0;"></p></div>' +
       "</div>" +
-      '<div class="card" id="weightEditor"><h3>Editor</h3><p class="card-sub" style="margin:0;">Choose a role template or an individual above.</p></div>';
+      '<div class="card" id="weightEditor"><h3>Editor</h3><p class="card-sub" style="margin:0;">' + (hasRoles ? "Choose a role template or an individual above." : "Choose a person above.") + "</p></div>";
     wirePeopleSearch("weightsSearch", [document.getElementById("weightsPeopleTable")], "weightsSearchCount");
     host.querySelectorAll("[data-edit-role]").forEach(function (b) { b.addEventListener("click", function () { startEdit("role", b.dataset.editRole); }); });
     host.querySelectorAll("[data-edit-person]").forEach(function (b) { b.addEventListener("click", function () { startEdit("employee", b.dataset.editPerson); }); });

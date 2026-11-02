@@ -151,7 +151,7 @@ ACCESS_MATRIX = [
     ("Salary, bonus/commission, OTE, pay band", "Full", "—", "—", "—"),
     ("Expense claims (line items)", "Full", "Totals only (aggregated)", "—", "—"),
     ("Individual KPI scorecards & gaps", "All", "Own departments", "Own team", "Own only"),
-    ("KPI weightage — role templates", "Edit any role", "Edit roles they supervise in own departments (not their own)", "View own team's roles", "View own"),
+    ("KPI weightage — role templates", "Edit any role", "Edit roles they supervise in own departments (not their own)", "—", "View own"),
     ("KPI weightage — individual agreed split / targets", "Edit", "Edit people they supervise (own departments)", "Edit direct reports (±15 pts of template)", "View own"),
     ("AI KPI suggestions: generate / review / approve", "Yes", "Own departments", "Own team", "—"),
     ("HR intervention cases", "All + executive decisions", "Own departments (escalations)", "Own team", "Own improvement focus only"),
