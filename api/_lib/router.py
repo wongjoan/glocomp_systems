@@ -317,7 +317,8 @@ def expenses(req):
 # ------------------------------------------------------------------ weightage
 
 def _role_rows(actor):
-    keys = sorted({store.role_key(u) for u in _employee_scope(actor, include_self=True)})
+    # Only the roles of people the actor supervises: never their own role or a peer's.
+    keys = sorted({store.role_key(u) for u in policy.supervised(actor)})
     rows = []
     for rk in keys:
         dept, title = rk.split("/", 1)
@@ -332,16 +333,17 @@ def weights(req):
     if req.user["level"] == "employee":
         raise policy.Forbidden("Employees can view their own weightage on My Performance")
     people = []
-    for u in _employee_scope(req.user):
+    supervised = policy.supervised(req.user)
+    for u in supervised:
         cfg = scoring.effective_config(u)
         people.append({"id": u["id"], "name": u["name"], "title": u["title"], "dept": u["dept"], "role_key": store.role_key(u),
                        "financial_weight": cfg["financial_weight"], "kpi_weights": cfg["kpi_weights"], "targets": cfg["targets"],
                        "individual": cfg["individual"], "agreed_by": cfg["agreed_by"], "agreed_at": cfg["agreed_at"],
                        "template_financial": cfg["template"]["financial_weight"], "editable": policy.manages(req.user, u["id"])})
-    depts = sorted({u["dept"] for u in _employee_scope(req.user, include_self=True)})
+    depts = sorted({u["dept"] for u in supervised})
     return {"roles": _role_rows(req.user), "people": people, "library": {d: scoring.library(d) for d in depts},
             "manager_band": policy.fin_band_for(req.user),
-            "rules": "Role templates: Director (any role) and Senior Managers (roles in their departments). Individual agreed weightage/targets: the employee's manager, senior manager or director; managers stay within ±%d pts of the role template's financial weight. Employees: view only. Every change requires a reason and is audit-logged." % policy.MANAGER_FIN_BAND}
+            "rules": "You only see the roles and people you supervise. Role templates: the Director (any role) and Senior Managers (roles in their own departments held only by people they supervise, never their own role). Individual agreed weightage/targets: only someone more senior who supervises the employee: their manager (direct reports, within ±%d pts of the role template's financial weight), their senior manager (own departments) or the Director. Employees: view only. Every change requires a reason and is audit-logged." % policy.MANAGER_FIN_BAND}
 
 
 def _check_employee_change(actor, u, body):
@@ -378,7 +380,7 @@ def weights_preview(req):
             after = dict(before)
             if not before["individual"]:  # individuals with an agreed override keep it
                 after.update(financial_weight=fw, kpi_weights=kw)
-            affected.append({"id": u["id"], "name": u["name"] if policy.can_view(req.user, u["id"]) else "(outside your scope)",
+            affected.append({"id": u["id"], "name": u["name"] if policy.manages(req.user, u["id"]) else "(outside your scope)",
                              "before": scoring.scorecard(u, before)["overall"], "after": scoring.scorecard(u, after)["overall"],
                              "keeps_individual_agreement": before["individual"]})
     else:

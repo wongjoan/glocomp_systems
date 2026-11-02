@@ -58,10 +58,17 @@ def require_view(actor, target_id):
 
 
 def manages(actor, target_id):
-    """True if actor sits above target in the hierarchy (and within scope). Nobody manages themselves."""
-    if target_id == actor["id"] or not can_view(actor, target_id):
+    """True if actor supervises target: target is within actor's scope (director: everyone; senior manager: their
+    departments; manager: direct reports) AND strictly more junior. Nobody manages themselves or a peer."""
+    t = store.user(target_id)
+    if not t or target_id == actor["id"] or not can_view(actor, target_id):
         return False
-    return rank(actor) >= LEVEL_RANK["manager"]
+    return rank(actor) >= LEVEL_RANK["manager"] and rank(actor) > rank(t)
+
+
+def supervised(actor):
+    """Everyone the actor supervises (see manages)."""
+    return [u for u in store.employees() if manages(actor, u["id"])]
 
 
 def require_manage(actor, target_id):
@@ -98,10 +105,14 @@ def visible_depts(actor):
 
 
 def can_edit_role_template(actor, rk):
-    dept = rk.split("/", 1)[0]
+    """Director: any role. Senior manager: a role in their departments whose holders they all supervise, so never
+    their own role (that would change how their own score is calculated) or a peer's. Managers and employees: view only."""
     if actor["level"] == "director":
         return True
-    return actor["level"] == "senior_manager" and dept in actor["scope_depts"]
+    if actor["level"] != "senior_manager" or rk.split("/", 1)[0] not in actor["scope_depts"]:
+        return False
+    holders = [u for u in store.employees() if store.role_key(u) == rk]
+    return bool(holders) and all(manages(actor, u["id"]) for u in holders)
 
 
 def editable_role_keys(actor):
@@ -140,8 +151,8 @@ ACCESS_MATRIX = [
     ("Salary, bonus/commission, OTE, pay band", "Full", "—", "—", "—"),
     ("Expense claims (line items)", "Full", "Totals only (aggregated)", "—", "—"),
     ("Individual KPI scorecards & gaps", "All", "Own departments", "Own team", "Own only"),
-    ("KPI weightage — role templates", "Edit any role", "Edit roles in own departments", "View", "View own"),
-    ("KPI weightage — individual agreed split / targets", "Edit", "Edit (own departments)", "Edit own team (±15 pts of template)", "View own"),
+    ("KPI weightage — role templates", "Edit any role", "Edit roles they supervise in own departments (not their own)", "View own team's roles", "View own"),
+    ("KPI weightage — individual agreed split / targets", "Edit", "Edit people they supervise (own departments)", "Edit direct reports (±15 pts of template)", "View own"),
     ("AI KPI suggestions: generate / review / approve", "Yes", "Own departments", "Own team", "—"),
     ("HR intervention cases", "All + executive decisions", "Own departments (escalations)", "Own team", "Own improvement focus only"),
     ("Individual pulse / onboarding survey answers", "HR / executive review", "—", "—", "—"),

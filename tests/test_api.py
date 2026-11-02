@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(ROOT, "api"))
 os.environ["GLOCOMP_STATE_PATH"] = os.path.join(tempfile.mkdtemp(), "state.json")
 os.environ.pop("VERCEL", None)
 
-from _lib import auth, router, store  # noqa: E402
+from _lib import auth, policy, router, store  # noqa: E402
 
 DIRECTOR, SM_SALES, SM_PRACTICE, MGR_SALES, MGR_CONS = "D0001", "E0078", "E0019", "E0348", "E0308"
 SENSITIVE_KEYS = {"base", "base_annual", "variable", "variable_annual", "ote", "ote_annual", "splitPct", "salary_cost",
@@ -163,6 +163,26 @@ class Api(unittest.TestCase):
         self.assertEqual(store.role_template(rk_in)["financial_weight"], 55)
         self.assertEqual(self.call("POST", "/api/weights/role", SM_SALES, dict(new, role_key=rk_out, kpi_weights=store.role_template(rk_out)["kpi_weights"]))[0], 403)
         self.call("POST", "/api/weights/role", SM_SALES, dict(new, role_key=rk_in, financial_weight=60))
+
+    def test_weightage_only_for_people_you_supervise(self):
+        for actor in (SM_SALES, SM_PRACTICE, MGR_SALES):
+            me = store.user(actor)
+            own_rk = store.role_key(me)
+            r = self.call("GET", "/api/weights", actor)[1]
+            # never yourself, a peer or anyone more senior; managers only their direct reports
+            for p in r["people"]:
+                u = store.user(p["id"])
+                self.assertLess(policy.rank(u), policy.rank(me), (actor, p["name"]))
+                if me["level"] == "manager":
+                    self.assertEqual(u.get("manager_id"), actor, (actor, p["name"]))
+                else:
+                    self.assertIn(u["dept"], me["scope_depts"], (actor, p["name"]))
+            self.assertNotIn(own_rk, {x["role_key"] for x in r["roles"]}, actor)
+            # cannot change your own role's template (it would change your own score), nor your own split
+            tpl = store.role_template(own_rk)
+            body = {"role_key": own_rk, "financial_weight": tpl["financial_weight"], "kpi_weights": tpl["kpi_weights"], "reason": "own role"}
+            self.assertEqual(self.call("POST", "/api/weights/role", actor, body)[0], 403, actor)
+            self.assertEqual(self.call("POST", "/api/weights/employee", actor, {"employee_id": actor, "financial_weight": tpl["financial_weight"], "reason": "self edit"})[0], 403, actor)
 
     # ---------------- director
     def test_director_full_access(self):
