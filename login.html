@@ -22,7 +22,9 @@
       <div class="persona" id="featured" role="radiogroup" aria-label="Demo persona"></div>
       <label class="field" style="margin-bottom:14px;">
         <span style="font-weight:700;color:var(--text-primary);">…or any employee</span>
+        <input id="employeeSearch" type="search" autocomplete="off" aria-label="Search employees by name, role or department" placeholder="Search name, role or department…" style="height:40px;margin-bottom:6px;">
         <select id="employeePick"><option value="">Choose an employee</option></select>
+        <small class="muted" id="employeeCount"></small>
       </label>
       <label class="field" style="margin-bottom:6px;">
         <span style="font-weight:700;color:var(--text-primary);" id="codeLabel">Demo code</span>
@@ -62,7 +64,7 @@
     }).join("");
     pick.innerHTML += d.employees.map(function (p) {
       levels[p.id] = p.level;
-      return '<option value="' + GC.esc(p.id) + '">' + GC.esc(p.name) + " — " + GC.esc(p.title) + " (" + GC.esc(p.dept) + ")</option>";
+      return '<option data-q="' + GC.esc([p.name, p.title, p.dept].join(" ").toLowerCase()) + '" value="' + GC.esc(p.id) + '">' + GC.esc(p.name) + " — " + GC.esc(p.title) + " (" + GC.esc(p.dept) + ")</option>";
     }).join("");
     document.getElementById("codeHint").textContent = d.access_code_hint || "";
     updateCodePrompt();
@@ -72,6 +74,21 @@
     if (pick.value) featured.querySelectorAll("input").forEach(function (i) { i.checked = false; });
     updateCodePrompt();
   });
+  // Filter the employee list; if the chosen employee is filtered out, pick the first match instead.
+  var search = document.getElementById("employeeSearch");
+  search.addEventListener("input", function () {
+    var q = search.value.trim().toLowerCase(), opts = pick.querySelectorAll("option[data-q]"), first = null, shown = 0;
+    opts.forEach(function (o) {
+      o.hidden = q !== "" && o.dataset.q.indexOf(q) === -1;
+      if (!o.hidden) { shown++; if (!first) first = o; }
+    });
+    document.getElementById("employeeCount").textContent = !q ? "" : shown ? shown + " of " + opts.length + " employees" : "No employee matches “" + search.value.trim() + "”";
+    var cur = pick.options[pick.selectedIndex];
+    if (q && first && (!cur || cur.hidden || !cur.value)) { pick.value = first.value; pick.dispatchEvent(new Event("change")); }
+    else if (q && !first && pick.value) { pick.value = ""; updateCodePrompt(); }   // nothing matches: don't keep a hidden choice
+  });
+  // Enter in the search box moves on to the code field instead of submitting the form.
+  search.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); document.getElementById("code").focus(); } });
   featured.addEventListener("change", function () { pick.value = ""; updateCodePrompt(); });
   document.getElementById("loginForm").addEventListener("submit", function (e) {
     e.preventDefault();
