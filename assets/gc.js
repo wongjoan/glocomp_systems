@@ -105,11 +105,13 @@
         '<div class="v">' + value + '</div><div class="s">' + sub + "</div></button>";
     }
     return '<div class="score-tiles">' +
-      tile("overall", "Overall performance", card.overall.toFixed(0) + "%", GC.badge(card.band.kind, card.band.label) + " · " + GC.esc(card.period)) +
-      tile("financial", "Financial", f.points.toFixed(0) + "% <small>of " + f.weight + "% possible</small>",
-        f.weight ? f.attainment_pct.toFixed(0) + "% of financial targets achieved" : "Not weighted for this role") +
-      tile("non_financial", "Non-financial", n.points.toFixed(0) + "% <small>of " + n.weight + "% possible</small>",
-        n.weight ? n.attainment_pct.toFixed(0) + "% of non-financial targets achieved" : "Not weighted for this role") +
+      tile("overall", "Overall performance", card.overall.toFixed(0) + "%", GC.badge(card.band.kind, card.band.label) + " · " + GC.esc(card.period) +
+        '<div style="margin-top:4px;">' + f.points.toFixed(0) + " + " + n.points.toFixed(0) + " points, out of 100</div>") +
+      // Points, not percentages: the two group scores add up to the overall % (e.g. 38 + 28 = 66).
+      tile("financial", "Financial", f.points.toFixed(0) + " <small>/ " + f.weight + " points</small>",
+        f.weight ? "Worth " + f.weight + " of the 100 points" : "Not weighted for this role") +
+      tile("non_financial", "Non-financial", n.points.toFixed(0) + " <small>/ " + n.weight + " points</small>",
+        n.weight ? "Worth " + n.weight + " of the 100 points" : "Not weighted for this role") +
       "</div>";
   };
 
